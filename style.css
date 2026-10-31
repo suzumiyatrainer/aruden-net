@@ -1,0 +1,931 @@
+:root {
+    --bg-dark: #f0f2f5;
+    --panel-bg: rgba(255, 255, 255, 0.95);
+    --accent-color: #28baa5;
+    --accent-light: #bfe4eb;
+    --text-primary: #1a1a1b;
+    --text-secondary: #65676b;
+    --success-color: #2ea043;
+    --error-color: #f85149;
+    --border-color: rgba(0, 0, 0, 0.08);
+    --modal-z: 2000;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', 'Noto Sans JP', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    height: 100vh;
+}
+
+/* Main Content Area */
+.map-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: #f1f5f9;
+    /* Soft gray for map background */
+}
+
+.map-header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    z-index: 100;
+}
+
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.map-header h1 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1c1e21;
+}
+
+.line-selector-tabs {
+    display: flex;
+    gap: 8px;
+    margin-left: 15px;
+}
+
+.line-tab {
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid transparent;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.line-tab:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.line-tab.active {
+    color: #ffffff;
+}
+
+.line-tab.active[data-line-id="AR"] {
+    background: #28baa5;
+    box-shadow: 0 2px 8px rgba(40, 186, 165, 0.4);
+}
+
+.line-tab.active[data-line-id="AH"] {
+    background: #49ce8f;
+    box-shadow: 0 2px 8px rgba(73, 206, 143, 0.4);
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.icon-button:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.user-avatar-btn {
+    width: 38px;
+    height: 38px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+}
+
+#user-avatar-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    image-rendering: pixelated;
+}
+
+#profile-avatar {
+    border-radius: 4px;
+    image-rendering: pixelated;
+}
+
+/* Route Map Container */
+.route-map {
+    flex: 1;
+    position: relative;
+    padding-top: 50px;
+    padding-bottom: 100px;
+    padding-left: 0;
+    min-width: 2100px;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    background: #f0f2f5;
+    cursor: default;
+}
+
+.route-container {
+    position: relative;
+    width: 100%;
+    zoom: 0.9;
+    /* Height is set dynamically in main.js */
+}
+
+/* Route Line Background (Central Track) — positioned dynamically per line */
+.route-line-bg {
+    position: absolute;
+    transform: translateX(-50%);
+    width: 7px;
+    border-left: 2px solid;
+    border-right: 2px solid;
+    z-index: 2;
+}
+
+/* Station Element */
+.station-marker {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    /* Center point */
+    display: flex;
+    align-items: center;
+}
+
+/* Station Circular Node on track — left set dynamically */
+.station-node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    background: #fff;
+    border: 3px solid var(--accent-color);
+    border-radius: 50%;
+    z-index: 10;
+    box-shadow: 0 0 10px rgba(40, 186, 165, 0.2);
+}
+
+/* Station ID Box — left set dynamically */
+.station-id-box {
+    position: absolute;
+    top: -20px;
+    width: 44px;
+    height: 48px;
+    background: #ffffff;
+    border: 4px solid var(--accent-color);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    color: #000;
+    text-align: center;
+}
+
+.station-id-prefix {
+    font-size: 18px;
+    /* Increased to 18px */
+    font-weight: 900;
+    line-height: 1;
+}
+
+.station-id-number {
+    font-size: 22px;
+    /* Decreased to 22px */
+    font-weight: 700;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+/* 停車種別案内バッジ (ナンバリングボックス直下・左端揃え・自動折り返し) */
+.station-stop-badges {
+    position: absolute;
+    top: 52px;
+    left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 3px 4px;
+    width: max-content;
+    max-width: 270px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 15;
+}
+
+/* 支線駅（新須賀浦）の停車種別案内バッジ (右端揃え) */
+.branch-station .station-stop-badges {
+    left: auto;
+    right: 0;
+    justify-content: flex-end;
+}
+
+.stop-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 13px;
+    font-size: 9.5px;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffffff;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+    letter-spacing: -0.5px;
+}
+
+/* 一部停車 (値: 2) - トーン少し暗め (brightness 0.75) & クリックで注意書き表示 */
+.stop-badge.partial-stop {
+    filter: brightness(0.75);
+    cursor: pointer;
+    position: relative;
+    outline: none;
+    pointer-events: auto; /* マウスイベントを受け取る設定 */
+}
+
+.stop-badge.partial-stop .badge-tooltip {
+    position: absolute;
+    top: calc(100% + 5px);
+    left: 0;
+    transform: none;
+    background: rgba(20, 20, 24, 0.92);
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    z-index: 200;
+}
+
+.stop-badge.partial-stop .badge-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    top: auto;
+    left: 12.5px;
+    transform: translateX(-50%);
+    border-width: 4px;
+    border-style: solid;
+    border-color: transparent transparent rgba(20, 20, 24, 0.92) transparent;
+}
+
+/* 支線駅 (新須賀浦など右端駅) のポップアップ右端揃え */
+.branch-station .stop-badge.partial-stop .badge-tooltip {
+    left: auto;
+    right: 0;
+}
+
+.branch-station .stop-badge.partial-stop .badge-tooltip::after {
+    left: auto;
+    right: 12.5px;
+    transform: translateX(50%);
+}
+
+/* クリック時 (active) または フォーカス時にポップアップを表示 */
+.stop-badge.partial-stop.active .badge-tooltip,
+.stop-badge.partial-stop:focus-within .badge-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Labels — left set dynamically */
+.station-name-main-group {
+    position: absolute;
+    bottom: -6px;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.station-name {
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.station-en-name {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: 'Outfit', sans-serif;
+    white-space: nowrap;
+}
+
+/* 乗換案内グループ (停車種別バッジの右横) */
+.station-transfer-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 6px;
+    pointer-events: auto;
+}
+
+.transfer-label {
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.transfer-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 20px;
+    border-radius: 2.5px;
+    color: #ffffff;
+    padding: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    align-self: center;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.transfer-prefix {
+    font-size: 8px;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.transfer-number {
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.transfer-line-name {
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.station-sub-name-group {
+    position: absolute;
+    top: 8px;
+}
+
+.station-zh-ko-name {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 400;
+    white-space: nowrap;
+}
+
+/* 駅名などのテキストボックス */
+.station-info {
+    width: 100%;
+    /* 親の200pxいっぱいに広げる */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* コネクター線 */
+.station-connector {
+    position: absolute;
+    height: 2px;
+    z-index: 0;
+    pointer-events: none;
+}
+.station-item {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    width: 200px;
+    /* 上記のJSでの計算と合わせる */
+    height: 40px;
+    transform: translateY(-50%);
+    /* Y座標の基準を中央に */
+    pointer-events: none;
+    z-index: 100;
+}
+
+.station-connector {
+    position: absolute;
+    left: 100%;
+    /* station-item(200px)の右端から開始 */
+    height: 1px;
+    background-color: #bfe4eb;
+    pointer-events: none;
+}
+
+
+/* --- station-node の重なり順を確実に上にする --- */
+.station-node {
+    z-index: 10;
+    /* 背景色を白にしておくと、後ろの線が多少重なっても綺麗に見えます */
+    background: #fff;
+}
+
+/* Lane markers for trains — left set dynamically */
+.train-marker {
+    position: absolute;
+    transform: translateY(-50%);
+    z-index: 20;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+/* 4-Lane offsets - Inner (1) vs Outer (2) */
+.train-marker.dir-up.lane-1 {
+    transform: translate(-60px, -50%);
+}
+
+.train-marker.dir-up.lane-2 {
+    transform: translate(-95px, -50%);
+}
+
+.train-marker.dir-down.lane-1 {
+    transform: translate(46px, -50%);
+}
+
+.train-marker.dir-down.lane-2 {
+    transform: translate(81px, -50%);
+}
+
+.train-icon {
+    width: 18px;
+    height: 30px;
+    background-color: var(--accent-color);
+    box-shadow: 0 0 12px rgba(40, 186, 165, 0.6);
+    transition: background-color 0.3s ease;
+    animation: train-pulse 2s infinite ease-in-out;
+}
+
+@keyframes train-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 0.9;
+    }
+}
+
+/* Directional Pointy Shape */
+.dir-up .train-icon {
+    clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%);
+}
+
+.dir-down .train-icon {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 80%, 50% 100%, 0% 80%);
+}
+
+/* 回送: 黒 */
+.train-marker.type-oos .train-icon {
+    background-color: #000000;
+}
+
+/* 各停: 灰 */
+.train-marker.type-local .train-icon {
+    background-color: #888888;
+}
+
+/* 区快: 青寄り水色 */
+.train-marker.type-sect-rapid .train-icon {
+    background-color: #4da6ff;
+}
+
+/* 通快: オレンジ */
+.train-marker.type-comm-rapid .train-icon {
+    background-color: #ff8c00;
+}
+
+/* --- Service Class Colors --- */
+.type-local .train-icon {
+    background: #444;
+}
+
+.type-sect-rapid .train-icon {
+    background: #2e7d32;
+}
+
+.type-comm-rapid .train-icon {
+    background: #1565c0;
+}
+
+.type-rapid .train-icon {
+    background: #d32f2f;
+}
+
+.type-new-rapid .train-icon {
+    background: #8bc34a;
+}
+
+.type-spec-rapid .train-icon {
+    background: #A020F0;
+}
+
+/* Purple */
+.type-ltd-exp .train-icon {
+    background: #FF69B4;
+}
+
+/* Pink */
+.type-oos .train-icon {
+    background: #777;
+    border: 2px dashed #999;
+}
+
+/* --- Train Info Label (Always Visible) --- */
+.train-label-info {
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.train-name {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.train-type-dest {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 9px;
+}
+
+/* --- Advanced Hover Tooltip --- */
+.train-marker {
+    position: absolute;
+    z-index: 100;
+    transition: top 0.5s ease-in-out, left 0.3s ease-out;
+}
+
+.train-marker:focus-visible .train-icon {
+    outline: 2px solid #0f766e;
+    outline-offset: 3px;
+}
+
+.train-marker.active {
+    z-index: 250;
+}
+
+.train-tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: 120%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    width: 240px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+.train-marker .train-tooltip {
+    opacity: 0;
+    visibility: hidden;
+    bottom: 120%;
+    pointer-events: none;
+}
+
+.train-marker.active .train-tooltip {
+    opacity: 1;
+    visibility: visible;
+    bottom: 140%;
+    pointer-events: auto;
+}
+
+.tooltip-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: bold;
+    color: #666;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+}
+
+.t-company {
+    color: var(--accent);
+}
+
+.t-stock {
+    color: #888;
+    margin-left: auto;
+    margin-right: 8px;
+}
+
+.tooltip-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.t-type {
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: white;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.t-type.type-spec-rapid {
+    background: #A020F0;
+}
+
+.t-type.type-ltd-exp {
+    background: #FF69B4;
+}
+
+.t-type.type-rapid {
+    background: #d32f2f;
+}
+
+.t-type.type-new-rapid {
+    background: #8bc34a;
+}
+
+.t-type.type-local {
+    background: #666;
+}
+
+.t-arrow {
+    color: #999;
+}
+
+.t-dest {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.oos-notice {
+    background: #fff3f3;
+    border: 1px solid #ffcccc;
+    color: #d32f2f;
+    padding: 6px;
+    font-size: 11px;
+    border-radius: 4px;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.oos-notice span {
+    font-size: 9px;
+    opacity: 0.8;
+}
+
+.tooltip-stops {
+    margin-top: 8px;
+    border-top: 1px solid #eee;
+    padding-top: 6px;
+}
+
+.stops-title {
+    font-size: 10px;
+    color: #999;
+    margin-bottom: 4px;
+}
+
+.stop-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 2px 0;
+}
+
+.stop-name {
+    font-weight: 500;
+}
+
+.stop-time {
+    color: #aaa;
+    font-family: monospace;
+}
+
+.no-stops {
+    font-size: 11px;
+    color: #bbb;
+    font-style: italic;
+    text-align: center;
+}
+
+/* Modal Overlay & Content */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--modal-z);
+}
+
+.modal-content {
+    background: #fff;
+    width: 400px;
+    border-radius: 16px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalPop {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.close-button {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+/* User Profile in Modal */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.user-profile img {
+    width: 48px;
+    height: 48px;
+    background: #e2e8f0;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-info .label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.user-info .player-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1c1e21;
+}
+
+.divider {
+    text-align: center;
+    position: relative;
+    margin: 20px 0;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.divider span {
+    position: relative;
+    background: #fff;
+    padding: 0 10px;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.secondary-btn {
+    background: #f0f2f5;
+    color: #1c1e21;
+}
+
+.secondary-btn:hover {
+    background: #e4e6eb;
+}
+
+/* Status Indicators */
+.status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.status-indicator.online {
+    background-color: var(--success-color);
+    box-shadow: 0 0 8px var(--success-color);
+}
+
+.status-indicator.offline {
+    background-color: var(--error-color);
+}
+
+/* PiP Window HUD Styles */
+.hud-body {
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.hud-data-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.hud-value {
+    color: #28baa5;
+    font-weight: 700;
+}

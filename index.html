@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有田電鉄 運行モニター</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="./static/icons/favicon.ico">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Main Content (Train Map) -->
+        <main class="map-container">
+            <header class="map-header">
+                <div class="header-left">
+                    <button id="menu-toggle" class="icon-button" title="運転支援メニュー">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                        </svg>
+                    </button>
+                    <h1>有田電鉄 運行モニター</h1>
+                    <div class="line-selector-tabs">
+                        <button class="line-tab active" data-line-id="AR">有田本線/新須賀浦線</button>
+                        <button class="line-tab" data-line-id="AH">東島線</button>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div id="ws-status" class="status-indicator offline" title="Status: Disconnected"></div>
+                    <button id="user-toggle" class="icon-button user-avatar-btn" title="ログイン">
+                        <div id="user-icon-placeholder">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path fill="currentColor"
+                                    d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                            </svg>
+                        </div>
+                        <img id="user-avatar-img" src="" alt="Avatar" style="display: none;">
+                    </button>
+                </div>
+            </header>
+
+            <div id="route-map" class="route-map">
+                <div id="route-container" class="route-container">
+                    <!-- Stations and Trains will be rendered here dynamically -->
+                    <div id="stations-container"></div>
+                    <div id="trains-container"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Auth Modal -->
+        <div id="login-modal" class="modal-backdrop" style="display: none;">
+            <div class="modal-content">
+                <button id="modal-close" class="close-button">&times;</button>
+                <section id="auth-panel" class="panel">
+                    <h2>乗務員メニュー</h2>
+
+                    <div id="auth-initial">
+                        <p>初回の方はMinecraft内で <code>/arutils register</code> を実行し、トークンを入力してください。</p>
+                        <input type="text" id="token-input" placeholder="トークンを入力" />
+                        <button id="btn-token-login">トークンでログイン</button>
+
+                        <div class="divider"><span>または</span></div>
+
+                        <p>2回目以降 (ID/パスワード)</p>
+                        <input type="text" id="player-id-input" placeholder="Minecraft ID (UUID)" />
+                        <input type="password" id="password-input" placeholder="パスワード" />
+                        <button id="btn-password-login">ログイン</button>
+                    </div>
+
+                    <div id="auth-set-password" style="display: none;">
+                        <p class="success">トークン認証成功</p>
+                        <p>次回以降のログイン用パスワードを設定してください。</p>
+                        <input type="password" id="new-password-input" placeholder="新しいパスワード" />
+                        <button id="btn-set-password">パスワード設定</button>
+                    </div>
+
+                    <div id="auth-success" style="display: none;">
+                        <div class="user-profile">
+                            <img id="profile-avatar" src="" alt="Avatar">
+                            <div class="user-info">
+                                <span class="label">ログイン中</span>
+                                <span id="logged-in-player" class="player-name">---</span>
+                            </div>
+                        </div>
+                        <button id="btn-logout" class="secondary-btn">ログアウト</button>
+                    </div>
+
+                    <p id="auth-error-msg" class="error-msg"></p>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script loaded at the end -->
+    <script src="main.js" type="module"></script>
+</body>
+
+</html>
