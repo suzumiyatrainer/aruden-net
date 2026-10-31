@@ -54,8 +54,7 @@ let currentAuthStatus = 'offline'; // offline, password_required, authenticated
 let currentPlayerData = null;
 let assistPiPWindow = null;
 let remoteFormations = [];
-let activeTooltipMarker = null;
-let activeTooltipFormationId = null;
+let activeTrainFormationId = null;
 let currentLineId = 'AR';
 
 function generateStopBadgesHTML(st) {
@@ -131,6 +130,15 @@ const TRAIN_PRIORITY = {
     'type-new-rapid': 50,
     'type-local': 10,
     'type-oos': 0
+};
+const TRAIN_TYPE_LABELS = {
+    0: '回送', 1: '回送', 2: '回送', 3: '回送', 4: '回送', 5: '回送', 6: '回送',
+    7: '各駅停車', 8: '区間快速', 9: '通勤快速', 10: '快速', 11: '新快速', 12: '特別快速', 15: '特急'
+};
+const TRAIN_TYPE_COLORS = {
+    'type-oos': '#777777', 'type-local': '#757575', 'type-sect-rapid': '#00bcd4',
+    'type-comm-rapid': '#ff8c00', 'type-rapid': '#d32f2f', 'type-new-rapid': '#8bc34a',
+    'type-spec-rapid': '#a020f0', 'type-ltd-exp': '#ff69b4'
 };
 let mapPanX = 0;
 let mapPanY = 0;
@@ -221,14 +229,6 @@ function getTypeInfo(type) {
     return AR_TYPES[type] || { id: 'lo', name: '各停', class: 'type-local' };
 }
 
-function formatTrainTypeDestination(typeInfo, destinationName, hideDestination = false) {
-    if (hideDestination || !destinationName) {
-        return typeInfo.name;
-    }
-
-    return `${typeInfo.name} ${destinationName}行`;
-}
-
 function getHudDestination(type, destination) {
     if (isNonRevenueType(type)) {
         return '---';
@@ -237,14 +237,21 @@ function getHudDestination(type, destination) {
     return AR_DISTS[destination] || DESTINATIONS[destination] || '---';
 }
 
-function getTrainMarkerOffset(dir, index, groupSize) {
-    if (groupSize <= 1) {
-        return dir === 'up' ? -44 : 30;
+function getDestinationStation(destinationId, destinationName) {
+    const eastShimaTerminusByDestination = { 9: 'AH07', 10: 'AH09', 11: 'AH01' };
+    const eastShimaStationId = eastShimaTerminusByDestination[Number(destinationId)];
+    if (eastShimaStationId) {
+        return ALL_STATIONS.find(station => station.id === eastShimaStationId) || null;
     }
+    return ALL_STATIONS.find(station => station.name === destinationName) || null;
+}
 
-    const step = 32;
-    const outerBase = dir === 'up' ? -76 : 62;
-    return outerBase + (dir === 'up' ? -step * index : step * index);
+function getTrainMarkerOffset(dir, index, groupSize) {
+    const innerOffset = dir === 'up' ? -32 : 14;
+    const trainSlotWidth = groupSize > 1 ? 24 : 0;
+    return dir === 'up'
+        ? innerOffset - trainSlotWidth * index
+        : innerOffset + trainSlotWidth * index;
 }
 
 function escapeHtml(value) {
@@ -256,67 +263,248 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
-function buildTrainTooltip(item) {
-    const { formation: f, typeInfo, company, rollingStock, finalDestName, SZ_type, SZ_dist } = item;
-    const isOOS = isNonRevenueType(SZ_type);
-    const destinationText = isOOS ? '表示なし' : `${finalDestName || getHudDestination(SZ_type, SZ_dist) || '不明'}行`;
-    const driverText = f.driver || '---';
-    const speedText = `${Math.round(f.speedKmh || 0)} km/h`;
-    const notchText = `${f.notch ?? '---'}`;
-    const signalText = `${f.signal ?? '---'}`;
+function getFormationNumber(formation, customButtons) {
+    const readDigit = (buttonNumber, buttonIndex) => {
+        const rawValue = formation.dataMap?.[`Button${buttonNumber}`] ?? customButtons?.[buttonIndex]?.value;
+        if (rawValue === undefined || rawValue === null || rawValue === '') return null;
+        const digit = Number(rawValue);
+        return Number.isInteger(digit) && digit >= 0 && digit <= 9 ? digit : null;
+    };
 
-    return `
-        <div class="train-tooltip" role="dialog" aria-label="列車情報">
-            <div class="tooltip-header">
-                <span class="t-company">${escapeHtml(company.name)}</span>
-                <span class="t-stock">${escapeHtml(rollingStock || '形式不明')}</span>
+    const tens = readDigit(7, 7);
+    const ones = readDigit(8, 8);
+    return tens !== null && ones !== null ? `${tens}${ones}` : '';
+}
+
+function getTrainStopRows(item) {
+    const stationId = station => station.branchId || station.id;
+    const destinationId = Number(item.SZ_dist);
+    const currentId = item.evalPos.type === 'station'
+        ? item.evalPos.stationId
+        : (item.evalPos.toStationId || item.evalPos.fromStationId);
+    const nearestStationIndex = stations => {
+        const progress = Number(item.evalPos.progress);
+        if (!Number.isFinite(progress)) return -1;
+        let nearestIndex = -1;
+        let nearestDistance = Infinity;
+        stations.forEach((station, index) => {
+            const distance = Math.abs(station.visualIndex - progress);
+            if (distance < nearestDistance) {
+                nearestIndex = index;
+                nearestDistance = distance;
+            }
+        });
+        return nearestIndex;
+    };
+    const eastShimaTerminusByDestination = { 9: 'AH07', 10: 'AH09', 11: 'AH01' };
+    const eastShimaTerminusId = eastShimaTerminusByDestination[destinationId];
+    let visibleStations;
+
+    if (eastShimaTerminusId && (item.lineId === 'AR' || item.lineId === 'AH')) {
+        const eastStations = ALL_STATIONS
+            .filter(station => station.lineId === 'AH')
+            .sort((a, b) => a.visualIndex - b.visualIndex);
+        const junctionIndex = eastStations.findIndex(station => stationId(station) === 'AH03');
+        const terminusIndex = eastStations.findIndex(station => stationId(station) === eastShimaTerminusId);
+
+        if (item.lineId === 'AR') {
+            const arStations = ALL_STATIONS
+                .filter(station => station.lineId === 'AR' && stationId(station) !== 'AR61')
+                .sort((a, b) => a.visualIndex - b.visualIndex);
+            let currentIndex = arStations.findIndex(station => stationId(station) === currentId);
+            if (currentIndex < 0) currentIndex = nearestStationIndex(arStations);
+            const arJunctionIndex = arStations.findIndex(station => stationId(station) === 'AR26');
+            let arPath = [];
+            if (currentIndex >= 0 && arJunctionIndex >= 0) {
+                const first = Math.min(currentIndex, arJunctionIndex);
+                const last = Math.max(currentIndex, arJunctionIndex);
+                arPath = arStations.slice(first, last + 1);
+                if (currentIndex > arJunctionIndex) arPath.reverse();
+            }
+
+            let eastPath = [];
+            if (junctionIndex >= 0 && terminusIndex >= 0) {
+                const first = Math.min(junctionIndex, terminusIndex);
+                const last = Math.max(junctionIndex, terminusIndex);
+                eastPath = eastStations.slice(first, last + 1);
+                if (terminusIndex < junctionIndex) eastPath.reverse();
+                eastPath = eastPath.filter(station => stationId(station) !== 'AH03');
+            }
+            visibleStations = [...arPath, ...eastPath];
+        } else {
+            let currentIndex = eastStations.findIndex(station => stationId(station) === currentId);
+            if (currentIndex < 0) currentIndex = nearestStationIndex(eastStations);
+            if (currentIndex >= 0 && terminusIndex >= 0) {
+                const first = Math.min(currentIndex, terminusIndex);
+                const last = Math.max(currentIndex, terminusIndex);
+                visibleStations = eastStations.slice(first, last + 1);
+                if (currentIndex > terminusIndex) visibleStations.reverse();
+            } else {
+                visibleStations = eastStations;
+            }
+        }
+    } else {
+        const routeStations = ALL_STATIONS
+            .filter(station => station.lineId === item.lineId)
+            .sort((a, b) => a.visualIndex - b.visualIndex);
+        const isShinSugauraDestination = item.lineId === 'AR' && destinationId >= 12;
+        let destinationStationId = isShinSugauraDestination ? 'AR61' : item.destStationId;
+        const destinationStation = ALL_STATIONS.find(station => stationId(station) === destinationStationId);
+        if (destinationStation && destinationStation.lineId !== item.lineId) {
+            destinationStationId = item.lineId === 'AR' ? 'AR26' : 'AH03';
+        }
+        let startIndex = routeStations.findIndex(station => stationId(station) === currentId);
+        if (startIndex < 0) startIndex = nearestStationIndex(routeStations);
+        const destinationIndex = routeStations.findIndex(station => stationId(station) === destinationStationId);
+
+        visibleStations = routeStations;
+        if (startIndex >= 0 && destinationIndex >= 0) {
+            const first = Math.min(startIndex, destinationIndex);
+            const last = Math.max(startIndex, destinationIndex);
+            visibleStations = routeStations.slice(first, last + 1);
+            if (startIndex > destinationIndex) visibleStations.reverse();
+        } else if (isShinSugauraDestination && destinationIndex >= 0) {
+            visibleStations = routeStations.filter(station => station.visualIndex <= routeStations[destinationIndex].visualIndex);
+        }
+    }
+
+    const stopKey = AR_TYPES[item.SZ_type]?.id;
+    return visibleStations
+        .filter(station => item.lineId !== 'AR' || destinationId >= 12 || stationId(station) !== 'AR61')
+        .filter(station => !stopKey || station[stopKey] !== -1)
+        .map(station => ({
+            station,
+            isCurrent: stationId(station) === currentId,
+            stops: stopKey ? station[stopKey] === 0 || station[stopKey] === 2 : false
+        }));
+}
+
+function getTrainDirectionNote(item) {
+    if (item.lineId !== 'AR') return '';
+
+    const visualIndexFor = id => ALL_STATIONS.find(station => station.id === id)?.visualIndex;
+    const aruda = visualIndexFor('AR01');
+    const kitaGawara = visualIndexFor('AR19');
+    const sugaura = visualIndexFor('AR20');
+    const shinSugaura = visualIndexFor('AR61');
+    const progress = Number(item.evalPos.progress);
+    const destinationId = Number(item.SZ_dist);
+    if (!Number.isFinite(progress)) return '';
+
+    const isBetween = (start, end) => start !== undefined && end !== undefined &&
+        progress >= Math.min(start, end) && progress <= Math.max(start, end);
+
+    if (item.dir === 'down' && isBetween(aruda, sugaura) && destinationId >= 6 && destinationId <= 11) {
+        return '須賀浦駅（KR線乗換）方面｜新須賀浦駅方面には行きません。';
+    }
+    if (item.dir === 'up' && isBetween(kitaGawara, sugaura) && destinationId >= 1 && destinationId <= 6) {
+        return '須賀浦駅（KR線乗換）方面｜新須賀浦駅方面には行きません。';
+    }
+    if (item.dir === 'down' && isBetween(aruda, shinSugaura) && destinationId === 12) {
+        return '新須賀浦駅止まり｜須賀浦駅方面には行きません。';
+    }
+    if (item.dir === 'down' && isBetween(aruda, shinSugaura) && destinationId >= 13 && destinationId <= 18) {
+        return '新須賀浦・京北線・城川線方面｜須賀浦駅方面には行きません。';
+    }
+
+    return '';
+}
+
+function renderTrainDetail(item, focusClose = false) {
+    const modal = document.getElementById('train-detail-modal');
+    if (!modal || !item) return;
+    const scrollArea = modal.querySelector('.train-detail-scroll');
+    const previousScrollTop = scrollArea?.scrollTop || 0;
+    const typeLabel = TRAIN_TYPE_LABELS[item.SZ_type] || item.typeInfo.name;
+    const iconColor = TRAIN_TYPE_COLORS[item.typeInfo.class] || '#555';
+    const directionNote = getTrainDirectionNote(item);
+    const eastShimaDirectNote = item.lineId === 'AR' && [9, 10, 11].includes(Number(item.SZ_dist));
+    const hasShinSugauraThroughService = item.lineId === 'AR' && Number(item.SZ_dist) > 12;
+    const carCount = item.formation.carCount ?? item.formation.cars?.length ?? item.formation.cars ??
+        item.formation.formationLength ?? item.formation.trainLength;
+    const arLineColor = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.color || '#28baa5';
+    const ahLineColor = ROUTE_DATA.lines.find(line => line.lineId === 'AH')?.color || '#49ce8f';
+    const stopRowItems = getTrainStopRows(item);
+    const stopRows = stopRowItems.map(({ station, isCurrent, stops }) => {
+        const lineColor = ROUTE_DATA.lines.find(line => line.lineId === station.lineId)?.color || '#28baa5';
+        const stationNumber = station.branchId || station.id;
+        const isEastShimaJunction = stationNumber === 'AR26' && item.lineId === 'AR' && [9, 10, 11].includes(Number(item.SZ_dist));
+        const displayedStationNumber = isEastShimaJunction
+            ? `<span>AR26</span><span style="color:${ahLineColor}">AH03</span>`
+            : escapeHtml(stationNumber);
+        const passingNumberColor = station.lineId === 'AH' ? '#c8ead8' : '#bfe4eb';
+        return `
+        <li class="train-stop-row ${stops ? 'stopping' : 'passing'} ${isCurrent ? 'current' : ''} ${isEastShimaJunction ? 'interline-junction' : ''}" data-station-id="${escapeHtml(station.branchId || station.id)}" data-line-id="${escapeHtml(station.lineId)}" style="--station-line-color:${lineColor}; --junction-line-color:${ahLineColor}; --passing-number-color:${passingNumberColor}">
+            <span class="train-stop-station">
+                <span class="train-stop-number ${isEastShimaJunction ? 'interline' : ''}">${displayedStationNumber}</span>
+                <span class="train-stop-name">${escapeHtml(station.name)}</span>
+            </span>
+            <span class="train-stop-status ${stops ? 'stopping' : 'passing'}">${stops ? '停車' : '通過'}</span>
+        </li>
+    `;
+    }).join('');
+    const firstEastLineRow = stopRowItems.findIndex(({ station }) => station.lineId === 'AH');
+    const eastLineStartPercent = Math.max(0, (firstEastLineRow - 0.4) / stopRowItems.length * 100);
+    const stopLineGradient = firstEastLineRow < 0
+        ? `linear-gradient(${arLineColor}, ${arLineColor})`
+        : firstEastLineRow === 0
+            ? `linear-gradient(${ahLineColor}, ${ahLineColor})`
+            : `linear-gradient(to bottom, ${arLineColor} 0%, ${arLineColor} ${eastLineStartPercent}%, ${ahLineColor} ${eastLineStartPercent}%, ${ahLineColor} 100%)`;
+
+    modal.querySelector('.train-detail-content').innerHTML = `
+        <div class="train-detail-summary">
+            <div class="train-detail-icon-wrap ${item.typeInfo.class}">
+                <div class="train-icon train-icon-large" style="--train-icon-color:${iconColor}">
+                </div>
+                <span class="train-detail-series">${escapeHtml(item.rollingStock || '')}</span>
             </div>
-            <div class="tooltip-main">
-                <span class="t-type ${typeInfo.class}">${escapeHtml(typeInfo.name)}</span>
-                <span class="t-arrow">→</span>
-                <span class="t-dest">${escapeHtml(destinationText)}</span>
-            </div>
-            ${isOOS ? '<div class="oos-notice">回送系統のため行先は非表示です</div>' : ''}
-            <div class="tooltip-stops">
-                <div class="stop-row"><span class="stop-name">列車番号</span><span class="stop-time">${escapeHtml(f.trainNumber || '---')}</span></div>
-                <div class="stop-row"><span class="stop-name">速度</span><span class="stop-time">${escapeHtml(speedText)}</span></div>
-                <div class="stop-row"><span class="stop-name">ノッチ</span><span class="stop-time">${escapeHtml(notchText)}</span></div>
-                <div class="stop-row"><span class="stop-name">信号</span><span class="stop-time">${escapeHtml(signalText)}</span></div>
-                <div class="stop-row"><span class="stop-name">運転士</span><span class="stop-time">${escapeHtml(driverText)}</span></div>
+            <div class="train-detail-heading">
+                ${eastShimaDirectNote ? '<div class="train-detail-service-note">東島線直通</div>' : ''}
+                <div class="train-detail-destination-row">
+                    <span class="train-detail-type ${item.typeInfo.class}" style="--service-type-color:${iconColor}">${escapeHtml(typeLabel)}</span>
+                    <span class="train-detail-destination">${escapeHtml(item.finalDestName || '行先不明')}行</span>
+                    <span class="train-detail-cars">${carCount !== undefined && carCount !== null && carCount !== '' ? `${escapeHtml(carCount)}両` : '両数不明'}</span>
+                </div>
+                <div class="train-detail-identifiers">
+                    <span>列車番号 ${escapeHtml(item.formation.trainNumber || '---')}</span>
+                    <span>編成番号 ${escapeHtml(item.formation.formationNumber || '---')}</span>
+                </div>
+                ${directionNote ? `<div class="train-detail-direction-note">${escapeHtml(directionNote)}</div>` : ''}
             </div>
         </div>
+        <div class="train-stop-heading"><span>停車駅</span><span>停車区分</span></div>
+        <ol class="train-stop-list" style="--stop-line-gradient:${stopLineGradient}">
+            ${stopRows || '<li class="train-stop-empty">停車駅情報がありません</li>'}
+            ${hasShinSugauraThroughService ? '<li class="train-through-service-note">新須賀浦から京北線・城川線へ直通</li>' : ''}
+        </ol>
     `;
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    if (firstEastLineRow > 0) {
+        const stopList = modal.querySelector('.train-stop-list');
+        const junctionRow = stopList?.querySelector('[data-station-id="AR26"]');
+        if (junctionRow) {
+            const listTop = stopList.getBoundingClientRect().top;
+            const junctionRect = junctionRow.getBoundingClientRect();
+            const transitionY = Math.max(0, junctionRect.top + junctionRect.height / 2 + 7 - listTop);
+            stopList.style.setProperty('--stop-line-gradient', `linear-gradient(to bottom, ${arLineColor} 0px, ${arLineColor} ${transitionY}px, ${ahLineColor} ${transitionY}px, ${ahLineColor} 100%)`);
+        }
+    }
+    const summary = modal.querySelector('.train-detail-summary');
+    modal.style.setProperty('--train-detail-summary-height', `${summary.offsetHeight}px`);
+    modal.querySelector('.train-detail-scroll').scrollTop = previousScrollTop;
+    if (focusClose) modal.querySelector('.train-detail-close').focus();
 }
 
-function closeActiveTooltip() {
-    if (activeTooltipMarker) {
-        activeTooltipMarker.classList.remove('active');
-        activeTooltipMarker.setAttribute('aria-expanded', 'false');
-    }
-
-    activeTooltipMarker = null;
-    activeTooltipFormationId = null;
-}
-
-function setActiveTooltip(marker, formationId) {
-    if (activeTooltipMarker && activeTooltipMarker !== marker) {
-        activeTooltipMarker.classList.remove('active');
-        activeTooltipMarker.setAttribute('aria-expanded', 'false');
-    }
-
-    activeTooltipMarker = marker;
-    activeTooltipFormationId = String(formationId);
-    marker.classList.add('active');
-    marker.setAttribute('aria-expanded', 'true');
-}
-
-function toggleTooltip(marker, formationId) {
-    if (activeTooltipMarker === marker) {
-        closeActiveTooltip();
-        return;
-    }
-
-    setActiveTooltip(marker, formationId);
+function closeTrainDetail() {
+    const modal = document.getElementById('train-detail-modal');
+    if (!modal) return;
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.querySelectorAll('.train-marker[aria-expanded="true"]').forEach(marker => {
+        marker.setAttribute('aria-expanded', 'false');
+    });
+    activeTrainFormationId = null;
 }
 
 function saveRouteMapScroll() {
@@ -380,7 +568,7 @@ function renderStations() {
 
     // 画面幅の 1/4 (25%) 点を現在選択中の路線の trackCenter に設定
     const viewWidth = routeMap ? routeMap.clientWidth : window.innerWidth;
-    const mainTrackCenter = Math.max(350, Math.round(viewWidth * 0.25));
+    const mainTrackCenter = Math.max(350, Math.round(viewWidth * 0.25)) + 55;
 
     // 現在選択されている路線のみを取得
     const activeLines = ROUTE_DATA.lines.filter(l => l.lineId === currentLineId);
@@ -393,6 +581,15 @@ function renderStations() {
     });
 
     // 支線のチェック
+    // evaluatePosition uses ALL_STATIONS, whose track centers were copied at module load.
+    // Keep those centers in sync with the positions used to render the current route.
+    ALL_STATIONS.forEach(station => {
+        const line = ROUTE_DATA.lines.find(item => item.lineId === station.lineId);
+        if (!line) return;
+        const isBranch = ROUTE_DATA.branches.some(branch => branch.branchId === station.branchId);
+        station.trackCenter = line.trackCenter + (isBranch ? 150 : 0);
+    });
+
     const activeBranches = ROUTE_DATA.branches.filter(br => br.parentLine === currentLineId);
 
     const totalHeight = (maxVisualIdx + 4) * STATION_SPACING;
@@ -598,6 +795,13 @@ async function fetchRemoteTrains() {
 
         // Map to our internal format
         const rawData = Array.isArray(json) ? json : (json.data || []);
+        const formationCarCounts = new Map();
+        rawData.forEach(car => {
+            if (car.formation === undefined || car.formation === null) return;
+            const formationKey = String(car.formation);
+            formationCarCounts.set(formationKey, (formationCarCounts.get(formationKey) || 0) + 1);
+        });
+
         remoteFormations = rawData.map(f => {
             const customButtons = Array.isArray(f.customButton) ? f.customButton : [];
 
@@ -616,6 +820,9 @@ async function fetchRemoteTrains() {
             return {
                 formationId: f.formation,
                 trainNumber: f.name,
+                modelName: f.modelName,
+                formationNumber: getFormationNumber(f, customButtons),
+                carCount: formationCarCounts.get(String(f.formation)) ?? null,
                 posX: f.pos.x,
                 posY: f.pos.y,
                 posZ: f.pos.z,
@@ -754,7 +961,13 @@ function getTrainCompany(trainName) {
     return { code: 'AR', name: '有田電鉄' };
 }
 
-function getRollingStock(trainName, company) {
+function getRollingStock(trainName, company, modelName = '') {
+    const modelMatch = String(modelName).match(/(\d{4})/);
+    if (company.code === 'AR' && modelMatch) {
+        const series = Math.floor(parseInt(modelMatch[1], 10) / 1000) * 1000;
+        return `${series}系`;
+    }
+
     if (!trainName) return '';
     const match = trainName.match(/\d+/);
     if (!match) return '';
@@ -795,12 +1008,12 @@ function renderTrains(formations) {
 
         // --- Company & Filtering ---
         const company = getTrainCompany(trainName);
-        const rollingStock = getRollingStock(trainName, company);
+        const rollingStock = getRollingStock(trainName, company, f.modelName);
         if (company.code === 'AR' && SZ_type >= 13) return;
 
         // 行先駅IDを取得
         const destName = AR_DISTS[SZ_dist] || DESTINATIONS[SZ_dist];
-        const destStation = ALL_STATIONS.find(s => s.name === destName);
+        const destStation = getDestinationStation(SZ_dist, destName);
         const destStationId = destStation ? (destStation.branchId || destStation.id) : null;
 
         // 前回の駅IDを編成ごとに記憶
@@ -817,24 +1030,39 @@ function renderTrains(formations) {
         // 駅・駅間以外は描画しない
         if (!evalPos.stationId && evalPos.type !== 'transit') return;
 
-        // 進行方向
-        let dir = 'down';
-        if (evalPos.direction) {
-            dir = evalPos.direction;
-        } else if (destStation && evalPos.stationId) {
-            const currentStation = ALL_STATIONS.find(s => s.id === evalPos.stationId);
-            if (destStation && currentStation) {
-                if (destStation.visualIndex < currentStation.visualIndex) {
-                    dir = 'up';
-                }
-            }
-        }
-
         const finalDestName = normalizeRemoteButtonText(destName || f.remoteDestText || '不明');
         const trackCenter = evalPos.trackCenter || 960;
 
         const lineId = evalPos.lineId || (destStation ? destStation.lineId : 'AR');
         if (lineId !== currentLineId) return;
+
+        // 線路図の左右レーンと矢印は、列車データの座標方向ではなく行先への駅順で決める。
+        // 他路線行きは現在路線の接続駅を目標にする。
+        let dir = evalPos.direction || 'down';
+        const routeStations = ALL_STATIONS
+            .filter(station => station.lineId === lineId)
+            .sort((a, b) => a.visualIndex - b.visualIndex);
+        let routeDestinationId = destStationId;
+        const routeDestination = ALL_STATIONS.find(station =>
+            (station.branchId || station.id) === routeDestinationId
+        );
+        if (lineId === 'AR' && Number(SZ_dist) >= 12) {
+            routeDestinationId = 'AR61';
+        } else if (routeDestination && routeDestination.lineId !== lineId) {
+            routeDestinationId = lineId === 'AR' ? 'AR26' : 'AH03';
+        }
+        const currentStationId = evalPos.type === 'station'
+            ? evalPos.stationId
+            : (evalPos.toStationId || evalPos.fromStationId);
+        let currentIndex = routeStations.findIndex(station => (station.branchId || station.id) === currentStationId);
+        let destinationIndex = routeStations.findIndex(station => (station.branchId || station.id) === routeDestinationId);
+        if (currentIndex < 0 && Number.isFinite(Number(evalPos.progress))) {
+            currentIndex = routeStations.reduce((nearest, station, index) =>
+                Math.abs(station.visualIndex - Number(evalPos.progress)) < Math.abs(routeStations[nearest]?.visualIndex - Number(evalPos.progress)) ? index : nearest, 0);
+        }
+        if (currentIndex >= 0 && destinationIndex >= 0 && currentIndex !== destinationIndex) {
+            dir = destinationIndex < currentIndex ? 'up' : 'down';
+        }
 
         const key = `${evalPos.stationId || evalPos.segment}_${dir}_${lineId}`;
         if (!groups[key]) groups[key] = [];
@@ -848,6 +1076,8 @@ function renderTrains(formations) {
             SZ_type,
             SZ_dist,
             finalDestName,
+            destStationId,
+            lineId,
             trackCenter,
             company,
             rollingStock
@@ -855,7 +1085,7 @@ function renderTrains(formations) {
     });
 
     container.innerHTML = '';
-    let restoredTooltip = false;
+    let restoredTrainDetail = false;
 
     Object.values(groups).forEach(group => {
         group.sort((a, b) => (TRAIN_PRIORITY[b.typeInfo.class] || 0) - (TRAIN_PRIORITY[a.typeInfo.class] || 0));
@@ -865,7 +1095,6 @@ function renderTrains(formations) {
             const el = document.createElement('div');
             const isOOS = isNonRevenueType(SZ_type);
             const markerOffset = getTrainMarkerOffset(dir, index, group.length);
-            const typeDestinationText = formatTrainTypeDestination(typeInfo, finalDestName, isOOS);
 
             const topPos = evalPos.progress * STATION_SPACING;
             const leftPos = trackCenter;
@@ -877,30 +1106,29 @@ function renderTrains(formations) {
             el.setAttribute('role', 'button');
             el.setAttribute('tabindex', '0');
             el.setAttribute('aria-expanded', 'false');
+            el.setAttribute('aria-haspopup', 'dialog');
 
-            el.innerHTML = `
-                <div class="train-icon"></div>
-                <div class="train-label-info">
-                    <div class="train-name">${f.trainNumber || ''}</div>
-                    <div class="train-type-dest">${typeDestinationText}</div>
-                </div>
-                ${buildTrainTooltip(item)}
-            `;
+            el.innerHTML = '<div class="train-icon" aria-hidden="true"></div>';
 
             el.addEventListener('click', (event) => {
                 event.stopPropagation();
-                toggleTooltip(el, f.formationId);
+                activeTrainFormationId = String(f.formationId);
+                el.setAttribute('aria-expanded', 'true');
+                renderTrainDetail(item, true);
             });
             el.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
-                    toggleTooltip(el, f.formationId);
+                    activeTrainFormationId = String(f.formationId);
+                    el.setAttribute('aria-expanded', 'true');
+                    renderTrainDetail(item, true);
                 }
             });
 
-            if (activeTooltipFormationId && String(f.formationId) === activeTooltipFormationId) {
-                setActiveTooltip(el, f.formationId);
-                restoredTooltip = true;
+            if (activeTrainFormationId && String(f.formationId) === activeTrainFormationId) {
+                el.setAttribute('aria-expanded', 'true');
+                renderTrainDetail(item);
+                restoredTrainDetail = true;
             }
 
             container.appendChild(el);
@@ -917,8 +1145,8 @@ function renderTrains(formations) {
         });
     });
 
-    if (activeTooltipFormationId && !restoredTooltip) {
-        closeActiveTooltip();
+    if (activeTrainFormationId && !restoredTrainDetail) {
+        closeTrainDetail();
     }
 }
 
@@ -1075,6 +1303,12 @@ function setupEventListeners() {
         document.getElementById('login-modal').style.display = 'none';
     });
 
+    const trainDetailModal = document.getElementById('train-detail-modal');
+    trainDetailModal.querySelector('.train-detail-close').addEventListener('click', closeTrainDetail);
+    trainDetailModal.addEventListener('click', event => {
+        if (event.target === trainDetailModal) closeTrainDetail();
+    });
+
     document.getElementById('menu-toggle').addEventListener('click', toggleAssistPiP);
 
     document.getElementById('btn-token-login').addEventListener('click', handleTokenLogin);
@@ -1086,14 +1320,9 @@ function setupEventListeners() {
         routeMap.addEventListener('scroll', saveRouteMapScroll, { passive: true });
     }
 
-    document.addEventListener('click', (event) => {
-        if (!event.target.closest('.train-marker')) {
-            closeActiveTooltip();
-        }
-    });
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
-            closeActiveTooltip();
+            closeTrainDetail();
         }
     });
     window.addEventListener('beforeunload', saveRouteMapScroll);

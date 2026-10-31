@@ -495,29 +495,28 @@ body {
 }
 
 .train-icon {
+    position: relative;
     width: 18px;
     height: 30px;
     background-color: var(--accent-color);
     box-shadow: 0 0 12px rgba(40, 186, 165, 0.6);
     transition: background-color 0.3s ease;
+    opacity: 1;
     animation: train-pulse 2s infinite ease-in-out;
 }
 
 @keyframes train-pulse {
     0% {
         transform: scale(1);
-        opacity: 0.9;
     }
 
     50% {
         transform: scale(1.05);
-        opacity: 1;
         border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
     100% {
         transform: scale(1);
-        opacity: 0.9;
     }
 }
 
@@ -542,7 +541,7 @@ body {
 
 /* 区快: 青寄り水色 */
 .train-marker.type-sect-rapid .train-icon {
-    background-color: #4da6ff;
+    background-color: #00bcd4;
 }
 
 /* 通快: オレンジ */
@@ -556,11 +555,11 @@ body {
 }
 
 .type-sect-rapid .train-icon {
-    background: #2e7d32;
+    background: #00bcd4;
 }
 
 .type-comm-rapid .train-icon {
-    background: #1565c0;
+    background: #ff8c00;
 }
 
 .type-rapid .train-icon {
@@ -597,9 +596,19 @@ body {
     padding: 2px 6px;
     border-radius: 4px;
     pointer-events: none;
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 1px;
+}
+
+.train-marker.active .train-label-info {
+    display: flex;
+}
+
+.train-marker.dir-up .train-label-info {
+    left: auto;
+    right: 24px;
+    text-align: right;
 }
 
 .train-name {
@@ -928,4 +937,399 @@ body {
 .hud-value {
     color: #28baa5;
     font-weight: 700;
+}
+
+/* Train detail dialog */
+.train-detail-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(20, 28, 40, 0.42);
+    backdrop-filter: blur(4px);
+}
+
+.train-detail-backdrop.open {
+    display: flex;
+}
+
+.train-detail-dialog {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: min(720px, 100%);
+    max-height: min(88vh, 850px);
+    overflow: hidden;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.train-detail-close {
+    position: absolute;
+    z-index: 2;
+    top: 14px;
+    right: 16px;
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f0f1f3;
+    color: #222;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.train-detail-scroll {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.train-detail-summary {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    min-height: 190px;
+    padding: 34px 72px 28px 30px;
+    background: #fff;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.04);
+}
+
+.train-detail-icon-wrap {
+    display: flex;
+    flex: 0 0 115px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    border-right: 2px solid #ddd;
+    padding-right: 22px;
+}
+
+.train-icon.train-icon-large {
+    width: 48px;
+    height: 58px;
+    border-radius: 12px 12px 8px 8px;
+    background-color: var(--train-icon-color, #28baa5);
+    box-shadow: none;
+    animation: none;
+}
+
+.train-detail-series {
+    margin-top: 8px;
+    color: #666;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.train-detail-heading {
+    min-width: 0;
+    flex: 1;
+}
+
+.train-detail-destination-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.train-detail-type {
+    min-width: 104px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: var(--service-type-color, #555);
+    color: #fff;
+    font-size: 22px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.train-detail-type.type-sect-rapid {
+    color: #12343a;
+}
+
+.train-detail-destination {
+    color: #171717;
+    font-size: clamp(20px, 4vw, 30px);
+    font-weight: 600;
+}
+
+.train-detail-cars {
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #eee;
+    color: #444;
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+.train-detail-identifiers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin-top: 18px;
+    color: #666;
+    font-size: 16px;
+}
+
+.train-detail-direction-note {
+    margin-top: 6px;
+    color: #d32f2f;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.train-stop-heading {
+    position: sticky;
+    top: var(--train-detail-summary-height, 190px);
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 28px;
+    background: #f0f0f0;
+    color: #666;
+    font-size: 15px;
+}
+
+.train-stop-list {
+    position: relative;
+    list-style: none;
+    padding: 4px 28px 22px 52px;
+}
+
+.train-stop-list::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 34px;
+    width: 6px;
+    background: var(--stop-line-gradient, var(--accent-color));
+    content: '';
+}
+
+.train-stop-row {
+    position: relative;
+    display: flex;
+    min-height: 58px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    border-bottom: 1px solid #eee;
+    color: #999;
+    font-size: 17px;
+}
+
+.train-stop-row::before {
+    position: absolute;
+    left: -24px;
+    width: 14px;
+    height: 14px;
+    border: 4px solid var(--station-line-color, var(--accent-color));
+    border-radius: 50%;
+    background: #fff;
+    content: '';
+}
+
+.train-stop-row.interline-junction::before {
+    width: 14px;
+    height: 14px;
+    border: 4px solid transparent;
+    background:
+        linear-gradient(#fff, #fff) padding-box,
+        conic-gradient(from 270deg,
+            var(--station-line-color, #28baa5) 0deg 180deg,
+            var(--junction-line-color, #49ce8f) 180deg 360deg) border-box;
+}
+
+.train-stop-row.current {
+    color: #222;
+    font-weight: 700;
+}
+
+.train-stop-station {
+    display: inline-flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.train-stop-number {
+    flex: 0 0 34px;
+    color: var(--station-line-color, #28baa5);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: inherit;
+}
+
+.train-stop-row.passing .train-stop-number {
+    color: var(--passing-number-color, #bfe4eb);
+}
+
+.train-stop-number.interline {
+    flex-basis: 34px;
+    display: inline-flex;
+    flex-direction: column;
+    align-self: center;
+    font-size: 11px;
+    line-height: 1.05;
+}
+
+.train-stop-name {
+    min-width: 0;
+}
+
+.train-stop-row.stopping {
+    color: #222;
+    font-weight: 700;
+}
+
+.train-stop-row.passing {
+    color: #999;
+}
+
+.train-stop-row.passing::before {
+    border-color: #aaa;
+    border-width: 2px;
+}
+
+.train-stop-status {
+    min-width: 54px;
+    color: #888;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.train-stop-row.current .train-stop-status.stopping {
+    color: var(--station-line-color, var(--accent-color));
+}
+
+.train-stop-row.stopping .train-stop-status {
+    color: var(--station-line-color, var(--accent-color));
+}
+
+.train-detail-service-note {
+    margin-bottom: 5px;
+    color: #242424;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.train-stop-empty {
+    padding: 24px 0;
+    color: #777;
+    text-align: center;
+}
+
+.train-through-service-note {
+    position: relative;
+    display: flex;
+    min-height: 48px;
+    align-items: center;
+    padding: 8px 0;
+    color: #74807d;
+    font-size: 14px;
+}
+
+.train-through-service-note::before {
+    position: absolute;
+    top: 50%;
+    left: -24px;
+    width: 14px;
+    height: 14px;
+    transform: translateY(-50%);
+    border: 2px solid #a7c9c3;
+    border-radius: 50%;
+    background: #fff;
+    content: '';
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+}
+
+@media (max-width: 560px) {
+    .train-detail-backdrop {
+        padding: 8px;
+    }
+
+    .train-detail-dialog {
+        max-height: 92vh;
+        border-radius: 20px;
+    }
+
+    .train-detail-summary {
+        gap: 14px;
+        min-height: 160px;
+        padding: 28px 58px 20px 16px;
+    }
+
+    .train-detail-icon-wrap {
+        flex-basis: 76px;
+        padding-right: 12px;
+    }
+
+    .train-detail-series {
+        font-size: 11px;
+    }
+
+    .train-detail-destination-row {
+        gap: 7px;
+    }
+
+    .train-detail-type {
+        min-width: 76px;
+        padding: 8px;
+        font-size: 17px;
+    }
+
+    .train-detail-cars {
+        padding: 6px;
+        font-size: 14px;
+    }
+
+    .train-detail-identifiers {
+        margin-top: 12px;
+        font-size: 13px;
+    }
+
+    .train-stop-heading {
+        padding: 12px 18px;
+    }
+
+    .train-stop-list {
+        padding-right: 18px;
+        padding-left: 42px;
+    }
+
+    .train-stop-list::before {
+        left: 24px;
+    }
+
+    .train-stop-row {
+        font-size: 15px;
+    }
+
+    .train-stop-row::before {
+        left: -24px;
+    }
 }

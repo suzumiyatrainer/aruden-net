@@ -50,6 +50,16 @@
             </div>
         </main>
 
+        <div id="train-detail-modal" class="train-detail-backdrop" aria-hidden="true">
+            <section class="train-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="train-detail-title">
+                <button class="train-detail-close" type="button" aria-label="閉じる">×</button>
+                <h2 id="train-detail-title" class="visually-hidden">列車情報</h2>
+                <div class="train-detail-scroll">
+                    <div class="train-detail-content"></div>
+                </div>
+            </section>
+        </div>
+
         <!-- Auth Modal -->
         <div id="login-modal" class="modal-backdrop" style="display: none;">
             <div class="modal-content">

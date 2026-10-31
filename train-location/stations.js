@@ -38,7 +38,7 @@ export const ROUTE_DATA = {
                 withCoords('AR15', { name: '小栗坂', en: 'Ogurizaka', zh: '小栗坂', ko: '오구리자카', lo: 0, ne: 0, se: 2, co: 1, ra: 1, sp: 1, le: -1 }),
                 withCoords('AR16', { name: '有電会沢', en: 'Arden-Aizawa', zh: '有电会泽', ko: '알덴아이자와', lo: 0, ne: 0, se: 0, co: 0, ra: 1, sp: 1, le: -1 }),
                 withCoords('AR17', { name: '中藤井', en: 'Naka-Fujii', zh: '中藤井', ko: '나카후지이', lo: 0, ne: 1, se: 1, co: 1, ra: 1, sp: 1, le: -1 }),
-                withCoords('AR18', { name: '八重川', en: 'Yaegawa', zh: '八重川', ko: '야에가와', lo: 0, ne: 1, se: 1, co: 1, ra: 1, sp: 1, le: -1 }),
+                withCoords('AR18', { name: '八重川', en: 'Yaegawa', zh: '八重川', ko: '야에가와', lo: 0, ne: 1, se: 1, co: 0, ra: 1, sp: 1, le: -1 }),
                 withCoords('AR19', { name: '北八重', en: 'Kita-Yae', zh: '北八重', ko: '키타야에', lo: 0, ne: 0, se: 0, co: 0, ra: 0, sp: 1, le: -1 }),
                 withCoords('AR20', { name: '須賀浦', en: 'Sugaura', zh: '须贺浦', ko: '스가우라', lo: 0, ne: 0, se: 0, co: 0, ra: 0, sp: 0, le: 0, transfers: [{ prefix: 'K', number: '16', lineName: 'KR線/KR Lines', color: '#0088ffff' }] }),
                 withCoords('AR21', { name: '有電内浦', en: 'Arden-Uchiura', zh: '有电内浦', ko: '알덴우치우라', lo: 0, ne: 1, se: 1, co: 1, ra: 1, sp: 1, le: 1, transfers: [{ prefix: 'K', number: '17', lineName: 'KR島浜線(内浦駅)/KR-Tohin Line(Uchiura Sta.)', color: '#0088ffff' }] }),
