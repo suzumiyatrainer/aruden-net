@@ -44,8 +44,8 @@ export const ROUTE_DATA = {
                 withCoords('AR21', { name: '有電内浦', en: 'Arden-Uchiura', zh: '有电内浦', ko: '알덴우치우라', lo: 0, ne: 1, se: 1, co: 1, ra: 1, sp: 1, le: 1, transfers: [{ prefix: 'K', number: '17', lineName: 'KR島浜線(内浦駅)/KR-Tohin Line(Uchiura Sta.)', color: '#0088ffff' }] }),
                 withCoords('AR22', { name: '想掛', en: 'Omoikake', zh: '想挂', ko: '오모이카케', lo: 0, ne: 0, se: 0, co: 0, ra: 0, sp: 1, le: 1 }),
                 withCoords('AR23', { name: '東想掛', en: 'Higashi-Omoikake', zh: '东想挂', ko: '히가시오모이카케', lo: 0, ne: 0, se: 0, co: 0, ra: 1, sp: 1, le: 1 }),
-                withCoords('AR24', { name: '会浜', en: 'Aihama', zh: '会滨', ko: '아이하마', lo: 0, ne: 0, se: 1, co: 1, ra: 1, sp: 1, le: 1 }),
-                withCoords('AR25', { name: '清光海岸', en: 'Seikō-Kaigan', zh: '清光海岸', ko: '세이코카이간', lo: 0, ne: 1, se: 1, co: 1, ra: 1, sp: 1, le: 1 }),
+                withCoords('AR24', { name: '有電美山', en: 'Aruden-Miyama', zh: '有电美山', ko: '알덴미야마', lo: 0, ne: 0, se: 1, co: 1, ra: 1, sp: 1, le: 1 }),
+                withCoords('AR25', { name: '桜地メジロの森', en: 'Sakuraji-Mejironomori', zh: '樱地繡眼鳥之森', ko: '사쿠라지 동박새의 숲', lo: 0, ne: 1, se: 1, co: 1, ra: 1, sp: 1, le: 1 }),
                 withCoords('AR26', { name: '桜地', en: 'Sakuraji', zh: '樱地', ko: '사쿠라지', lo: 0, ne: 0, se: 0, co: 0, ra: 0, sp: 0, le: 0, junction: 'AH03' }),
             ]
         },
