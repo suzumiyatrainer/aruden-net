@@ -2,8 +2,8 @@
 import { ROUTE_DATA, ALL_STATIONS, evaluatePosition } from './stations.js';
 
 // Constants and Mappings
-const WS_URL = 'ws://localhost:3000/ws';
-const REMOTE_URL = 'http://localhost:3000/api/trains';
+const WS_URL = 'wss://suzumiya-nas.tail61b99.ts.net/ws';
+const REMOTE_URL = 'https://suzumiya-nas.tail61b99.ts.net/';
 
 const TYPES = {
     0: "回送", 1: "回送", 2: "回送", 3: "臨時", 4: "回送", 5: "回送", 6: "回送",
