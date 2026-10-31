@@ -182,12 +182,16 @@ function readNumericButtonValue(button) {
 }
 
 function findRemoteButtonValue(customButtons, allowedValues, labelToValue, fallbackIndex) {
+    const labeledButton = (customButtons || []).find(button =>
+        labelToValue.has(normalizeRemoteButtonText(button.text))
+    );
+    if (labeledButton) {
+        return labelToValue.get(normalizeRemoteButtonText(labeledButton.text));
+    }
+
     const matchedButton = (customButtons || []).find(button => {
         const value = readNumericButtonValue(button);
-        if (value === null || !allowedValues.has(value)) return false;
-
-        const normalizedText = normalizeRemoteButtonText(button.text);
-        return !normalizedText || labelToValue.get(normalizedText) === value;
+        return value !== null && allowedValues.has(value);
     });
 
     if (matchedButton) {
