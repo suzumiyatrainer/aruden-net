@@ -199,7 +199,7 @@ function findRemoteButtonValue(customButtons, allowedValues, labelToValue, fallb
 }
 
 function getRemoteDestinationText(customButtons, destinationValue, fallbackIndex = 1) {
-    const mappedDestination = DESTINATIONS[destinationValue] || AR_DISTS[destinationValue];
+    const mappedDestination = AR_DISTS[destinationValue] || DESTINATIONS[destinationValue];
     if (mappedDestination) return mappedDestination;
 
     return normalizeRemoteButtonText(customButtons?.[fallbackIndex]?.text);
@@ -230,7 +230,7 @@ function getHudDestination(type, destination) {
         return '---';
     }
 
-    return DESTINATIONS[destination] || AR_DISTS[destination] || '---';
+    return AR_DISTS[destination] || DESTINATIONS[destination] || '---';
 }
 
 function getTrainMarkerOffset(dir, index, groupSize) {
@@ -795,7 +795,7 @@ function renderTrains(formations) {
         if (company.code === 'AR' && SZ_type >= 13) return;
 
         // 行先駅IDを取得
-        const destName = DESTINATIONS[SZ_dist] || AR_DISTS[SZ_dist];
+        const destName = AR_DISTS[SZ_dist] || DESTINATIONS[SZ_dist];
         const destStation = ALL_STATIONS.find(s => s.name === destName);
         const destStationId = destStation ? (destStation.branchId || destStation.id) : null;
 
