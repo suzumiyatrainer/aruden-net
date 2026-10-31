@@ -1,3 +1,7 @@
-.api-proxy/
-.waypoints/
-.work/
+# top
+aruden-net.code-workspace
+
+# train-location
+train-location/.api-proxy/
+train-location/.waypoints/
+train-location/.work/
