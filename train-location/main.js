@@ -3,6 +3,7 @@ import { ROUTE_DATA, ALL_STATIONS, evaluatePosition } from './stations.js';
 
 // Constants and Mappings
 const WS_URL = 'wss://suzumiya-nas.tail61b99.ts.net/ws';
+const WS_HEARTBEAT_INTERVAL_MS = 10000;
 const REMOTE_URL = 'https://suzumiya-nas.tail61b99.ts.net/';
 
 const TYPES = {
@@ -52,6 +53,7 @@ const STOP_TYPES = [
 // Application State
 let ws = null;
 let wsConnected = false;
+let wsHeartbeatTimer = null;
 let currentAuthStatus = 'offline'; // offline, password_required, authenticated
 let currentPlayerData = null;
 let assistPiPWindow = null;
@@ -535,6 +537,13 @@ function setupWebSocket() {
         wsConnected = true;
         setStatus('Online', 'online');
         console.log(`✅ WebSocket Connected to ${WS_URL}`);
+        const sendHeartbeat = () => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ action: 'ping' }));
+            }
+        };
+        sendHeartbeat();
+        wsHeartbeatTimer = setInterval(sendHeartbeat, WS_HEARTBEAT_INTERVAL_MS);
         // Auto-login if we have session data
         const savedId = sessionStorage.getItem('aruden_session_id');
         const savedPwd = sessionStorage.getItem('aruden_session_pwd');
@@ -545,6 +554,10 @@ function setupWebSocket() {
 
     ws.onclose = (e) => {
         wsConnected = false;
+        if (wsHeartbeatTimer !== null) {
+            clearInterval(wsHeartbeatTimer);
+            wsHeartbeatTimer = null;
+        }
         setStatus('Offline', 'offline');
         console.log(`❌ WebSocket Disconnected (code: ${e.code}). Retrying in 5s...`);
         setTimeout(setupWebSocket, 5000); // Reconnect
@@ -556,8 +569,9 @@ function setupWebSocket() {
 
     ws.onmessage = (e) => {
         try {
-            console.log(`📩 WebSocket Received:`, e.data);
             const data = JSON.parse(e.data);
+            if (data.type === 'pong') return;
+            console.log(`📩 WebSocket Received:`, e.data);
             if (data.type === 'auth_response') handleAuthResponse(data);
             else if (data.type === 'driver_assist' || data.type === 'driver_assist_v2') handleDriverAssist(data);
         } catch (err) {
