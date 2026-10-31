@@ -1,7 +1,11 @@
 .api-proxy/
 .waypoints/
 <<<<<<< HEAD
+<<<<<<< HEAD
 .work/
 =======
 .work/
 >>>>>>> 4a2415a (Initial commit)
+=======
+.work/git branch
+>>>>>>> f3c1f47 (.gitignoreを更新し、.work/git branchを追加。main.jsにimport文を追加し、tmp_allstops.csvを新規作成。)
