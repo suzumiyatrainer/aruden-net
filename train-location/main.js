@@ -944,7 +944,7 @@ function setupWebSocket() {
 // --- Handlers ---
 async function fetchRemoteTrains() {
     try {
-        const response = await fetch(REMOTE_URL);
+        const response = await fetch(REMOTE_URL, { cache: 'no-store' });
         if (!response.ok) {
             console.warn(`Train API returned HTTP ${response.status}`);
             return;
