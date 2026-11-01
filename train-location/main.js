@@ -304,6 +304,8 @@ function findRemoteButtonValue(customButtons, allowedValues, labelToValue, fallb
 
 function getCompanyTypeValueFromLabel(companyCode, customButtons) {
     const buttonText = normalizeRemoteButtonText(customButtons?.[0]?.text)
+        .replace(/^\[[^\]]*\]/, '')
+        .replace(/^【[^】]*】/, '')
         .replace(/^[\[【「『(（]+/, '')
         .trim();
     const classByLabel = [
