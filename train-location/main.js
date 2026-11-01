@@ -1293,7 +1293,8 @@ function renderTrains(formations) {
             const isOOS = isNonRevenueType(SZ_type, item.company.code);
             const markerOffset = getTrainMarkerOffset(dir, index, group.length);
 
-            const topPos = evalPos.progress * STATION_SPACING;
+            const lineProgressOffset = ROUTE_DATA.lines.find(line => line.lineId === item.lineId)?.junctionOffset || 0;
+            const topPos = (evalPos.progress - lineProgressOffset) * STATION_SPACING;
             const leftPos = trackCenter;
 
             el.className = `train-marker ${isOOS ? 'non-commercial' : 'commercial'} dir-${dir} ${typeInfo.class}`;
