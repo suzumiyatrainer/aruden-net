@@ -1084,6 +1084,14 @@ body {
     font-size: 16px;
 }
 
+.train-detail-error {
+    padding: 10px 24px;
+    background: #fff3f3;
+    color: #b42318;
+    font-size: 14px;
+    font-weight: 700;
+}
+
 .train-detail-direction-note {
     margin-top: 6px;
     color: #d32f2f;

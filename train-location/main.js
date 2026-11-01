@@ -6,18 +6,6 @@ const WS_URL = 'wss://suzumiya-nas.tail61b99.ts.net/ws';
 const WS_HEARTBEAT_INTERVAL_MS = 10000;
 const REMOTE_URL = 'https://suzumiya-nas.tail61b99.ts.net/';
 
-const TYPES = {
-    0: "回送", 1: "回送", 2: "回送", 3: "臨時", 4: "回送", 5: "回送", 6: "回送",
-    7: "各駅停車", 8: "区間快速", 9: "通勤快速", 10: "快速", 11: "新快速", 12: "特別快速"
-};
-
-const DESTINATIONS = {
-    0: "", 1: "有田", 2: "有電高柳", 3: "蹄光寺坂", 4: "本涼瀬", 5: "十全",
-    6: "須賀浦", 7: "想掛", 8: "桜地", 9: "東島", 10: "北河原", 11: "高見浜",
-    12: "新須賀浦", 13: "松森川", 14: "金城", 15: "糸里",
-    16: "島見が丘", 19: "鴫野華瀬", 18: "城川芝浦"
-};
-
 const AR_TYPES = {
     default: { id: 'oo', name: '回送', class: 'type-oos' },
     7: { id: 'lo', name: '各停', class: 'type-local' },
@@ -25,15 +13,87 @@ const AR_TYPES = {
     9: { id: 'co', name: '通快', class: 'type-comm-rapid' },
     10: { id: 'ra', name: '快速', class: 'type-rapid' },
     11: { id: 'ne', name: '新快', class: 'type-new-rapid' },
-    12: { id: 'sp', name: '特快', class: 'type-spec-rapid' },
-    15: { id: 'le', name: '特急', class: 'type-ltd-exp' },
+    12: { id: 'sp', name: '特快', class: 'type-spec-rapid' }
 };
 
 const AR_DISTS = {
-    0: "", 1: "有田", 2: "有電高柳", 3: "蹄光寺坂", 4: "本涼瀬", 5: "十全",
-    6: "須賀浦", 7: "想掛", 8: "桜地", 9: "東島", 10: "北河原", 11: "高見浜",
-    12: "新須賀浦", 13: "松森川", 14: "金城", 15: "糸里",
-    16: "島見が丘", 19: "鴫野華瀬", 18: "城川芝浦"
+    1: "有田",
+    2: "有電高柳",
+    3: "蹄光寺坂",
+    4: "本涼瀬",
+    5: "十全",
+    6: "須賀浦",
+    7: "想掛",
+    8: "桜地",
+    9: "東島",
+    10: "北河原",
+    11: "高見浜",
+    12: "新須賀浦",
+    13: "松森川",
+    14: "金城",
+    15: "糸里",
+    16: "島見が丘",
+    17: "鴫野華瀬",
+    18: "城川芝浦"
+};
+
+const KHR_TYPES = {
+    default: { id: 'oo', name: '回送', class: 'type-oos' },
+    17: { id: 'lo', name: '各停', class: 'type-local' },
+    18: { id: 'se', name: '区快', class: 'type-sect-rapid' },
+    19: { id: 'co', name: '通快', class: 'type-comm-rapid' },
+    20: { id: 'ra', name: '快速', class: 'type-rapid' },
+    21: { id: 'ne', name: '新快', class: 'type-new-rapid' },
+    22: { id: 'sp', name: '特快', class: 'type-spec-rapid' }
+};
+const KHR_DISTS = {
+    14: "金城",
+    15: "松森川",
+    16: "北海王",
+    17: "新須賀浦",
+    19: "城川芝浦",
+    20: "春海",
+    21: "島見が丘",
+    22: "金城",
+    24: "東島",
+    25: "芝向",
+    26: "桜地",
+    27: "高見浜",
+    28: "須賀浦",
+    29: "八重川",
+    30: "十全",
+    31: "本涼瀬",
+    32: "有電高柳",
+    33: "有田",
+};
+
+const SR_TYPES = {
+    default: { id: 'oo', name: '回送', class: 'type-oos' },
+    11: { id: 'lo', name: '各停', class: 'type-local' },
+    12: { id: 'se', name: '区快', class: 'type-sect-rapid' },
+    13: { id: 'co', name: '通快', class: 'type-comm-rapid' },
+    14: { id: 'ra', name: '快速', class: 'type-rapid' },
+    15: { id: 'ne', name: '新快', class: 'type-new-rapid' },
+    16: { id: 'sp', name: '特快', class: 'type-spec-rapid' }
+};
+const SR_DISTS = {
+    1: "城川芝浦",
+    2: "葛海中央",
+    3: "糸里",
+    4: "金城",
+    9: "金城",
+    10: "松森川",
+    11: "新須賀浦",
+    12: "有田",
+    13: "有電高柳",
+    14: "蹄光寺坂",
+    15: "本涼瀬",
+    16: "十全",
+    17: "須賀浦",
+    18: "桜地",
+    19: "東島",
+    20: "北河原",
+    21: "高見浜",
 };
 
 const STOP_TYPES = [
@@ -45,6 +105,14 @@ const STOP_TYPES = [
     { key: 'sp', name: '特快', color: '#9c27b0' },
     { key: 'le', name: '特急', color: '#e91e63' }
 ];
+
+const AR_NOTE_DESTINATIONS = {
+    ForSugauraAt0120: new Set(['須賀浦', '想掛', '桜地', '東島', '北河原', '高見浜', "芝向"]),
+    ForArudaAt2026AH: new Set(['有田', '有電高柳', '蹄光寺坂', '本涼瀬', '十全', '須賀浦', "八重川"]),
+    TerminateAtShinSugaura: '新須賀浦',
+    HigashijimaLineDirect: new Set(['東島', '北河原', '高見浜', "芝向"]),
+    beyondShinSugaura: new Set(['松森川', "北海王", '金城', '糸里', '葛海中央', '城川芝浦', "島見が丘", "春海", '鴫野華瀬'])
+};
 
 // Application State
 let ws = null;
@@ -59,7 +127,7 @@ let currentLineId = 'AR';
 
 function generateStopBadgesHTML(st) {
     if (!st) return '';
-    const badges = STOP_TYPES.filter(type => st[type.key] === 0 || st[type.key] === 2)
+    const badges = STOP_TYPES.filter(type => st[type.key] === 0)
         .map(type => {
             const isPartial = st[type.key] === 2;
             if (isPartial) {
@@ -109,17 +177,41 @@ document.addEventListener('mousedown', (e) => {
 
 const NON_REVENUE_MAX_TYPE = 6;
 const ROUTE_MAP_SCROLL_KEY = 'aruden_route_map_scroll';
-const REMOTE_TYPE_VALUES = new Set(Object.keys(TYPES).map(Number));
-const REMOTE_DEST_VALUES = new Set([
-    ...Object.keys(DESTINATIONS).map(Number),
-    ...Object.keys(AR_DISTS).map(Number)
-]);
+const REMOTE_TYPE_VALUES = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+const REMOTE_DEST_VALUES = new Set(Object.keys(AR_DISTS).map(Number));
 const REMOTE_TYPE_LABEL_TO_VALUE = new Map(
-    Object.entries(TYPES).map(([value, label]) => [label, Number(value)])
+    [['回送', 6], ['臨時', 3], ['各駅停車', 7], ['区間快速', 8], ['通勤快速', 9], ['快速', 10], ['新快速', 11], ['特別快速', 12]]
 );
 const REMOTE_DEST_LABEL_TO_VALUE = new Map(
-    [...Object.entries(DESTINATIONS), ...Object.entries(AR_DISTS)].map(([value, label]) => [label, Number(value)])
+    Object.entries(AR_DISTS).map(([value, label]) => [label, Number(value)])
 );
+
+function getCompanyTypes(companyCode) {
+    if (companyCode === 'KK') return KHR_TYPES;
+    if (companyCode === 'SK') return SR_TYPES;
+    return AR_TYPES;
+}
+
+function getCompanyDestinations(companyCode) {
+    if (companyCode === 'KK') return KHR_DISTS;
+    if (companyCode === 'SK') return SR_DISTS;
+    return AR_DISTS;
+}
+
+function getRemoteCompanyButtonConfig(companyCode, kind) {
+    if (companyCode === 'AR') {
+        return kind === 'type'
+            ? { values: REMOTE_TYPE_VALUES, labels: REMOTE_TYPE_LABEL_TO_VALUE }
+            : { values: REMOTE_DEST_VALUES, labels: REMOTE_DEST_LABEL_TO_VALUE };
+    }
+
+    const map = kind === 'type' ? getCompanyTypes(companyCode) : getCompanyDestinations(companyCode);
+    const entries = Object.entries(map).filter(([key]) => Number.isInteger(Number(key)));
+    const labels = kind === 'type'
+        ? new Map(entries.filter(([, value]) => value?.name).map(([key, value]) => [value.name, Number(key)]))
+        : new Map(entries.map(([key, value]) => [value, Number(key)]));
+    return { values: new Set(entries.map(([key]) => Number(key))), labels };
+}
 
 const TRAIN_PRIORITY = {
     'type-ltd-exp': 100,
@@ -210,38 +302,70 @@ function findRemoteButtonValue(customButtons, allowedValues, labelToValue, fallb
     return fallbackValue !== null && allowedValues.has(fallbackValue) ? fallbackValue : 0;
 }
 
-function getRemoteDestinationText(customButtons, destinationValue, fallbackIndex = 1) {
-    const mappedDestination = AR_DISTS[destinationValue] || DESTINATIONS[destinationValue];
+function getCompanyTypeValueFromLabel(companyCode, customButtons) {
+    const buttonText = normalizeRemoteButtonText(customButtons?.[0]?.text)
+        .replace(/^[\[【「『(（]+/, '')
+        .trim();
+    const classByLabel = [
+        [/^(各停|各駅停車)/, 'type-local'],
+        [/^(区快|区間快速)/, 'type-sect-rapid'],
+        [/^(通快|通勤快速)/, 'type-comm-rapid'],
+        [/^快速/, 'type-rapid'],
+        [/^(新快|新快速)/, 'type-new-rapid'],
+        [/^(特快|特別快速)/, 'type-spec-rapid'],
+        [/^特急/, 'type-ltd-exp'],
+        [/^回送/, 'type-oos']
+    ];
+    const matchedClass = classByLabel.find(([pattern]) => pattern.test(buttonText))?.[1];
+    if (!matchedClass) return null;
+
+    const entry = Object.entries(getCompanyTypes(companyCode))
+        .find(([, type]) => type?.class === matchedClass);
+    return entry ? Number(entry[0]) : null;
+}
+
+function getRemoteDestinationText(customButtons, destinationValue, companyCode = 'AR', fallbackIndex = 1) {
+    const mappedDestination = getCompanyDestinations(companyCode)[destinationValue];
     if (mappedDestination) return mappedDestination;
 
     return normalizeRemoteButtonText(customButtons?.[fallbackIndex]?.text);
 }
 
-function isNonRevenueType(type) {
+function isNonRevenueType(type, companyCode = 'AR') {
+    if (companyCode !== 'AR') {
+        const companyType = getCompanyTypes(companyCode)[type];
+        return companyType ? companyType.class === 'type-oos' || companyType.nonRevenue === true : false;
+    }
     return type >= 0 && type <= NON_REVENUE_MAX_TYPE;
 }
 
-function getTypeInfo(type) {
-    if (isNonRevenueType(type)) {
-        return { id: `nr-${type}`, name: TYPES[type] || AR_TYPES.default.name, class: AR_TYPES.default.class };
+function getTypeInfo(type, companyCode = 'AR') {
+    const companyTypes = getCompanyTypes(companyCode);
+    const configuredType = companyTypes[type];
+    if (companyCode !== 'AR' && configuredType && typeof configuredType === 'object') {
+        return configuredType;
+    }
+    if (isNonRevenueType(type, companyCode)) {
+        const defaultType = companyTypes.default || AR_TYPES.default || { id: 'oo', name: '回送', class: 'type-oos' };
+        return { id: `nr-${type}`, name: defaultType.name, class: defaultType.class };
     }
 
-    return AR_TYPES[type] || { id: 'lo', name: '各停', class: 'type-local' };
+    return configuredType || { id: 'lo', name: '各停', class: 'type-local' };
 }
 
-function getHudDestination(type, destination) {
-    if (isNonRevenueType(type)) {
+function getHudDestination(type, destination, companyCode = 'AR') {
+    if (isNonRevenueType(type, companyCode)) {
         return '---';
     }
 
-    return AR_DISTS[destination] || DESTINATIONS[destination] || '---';
+    return getCompanyDestinations(companyCode)[destination] || '---';
 }
 
-function getDestinationStation(destinationId, destinationName) {
-    const eastShimaTerminusByDestination = { 9: 'AH07', 10: 'AH09', 11: 'AH01' };
-    const eastShimaStationId = eastShimaTerminusByDestination[Number(destinationId)];
-    if (eastShimaStationId) {
-        return ALL_STATIONS.find(station => station.id === eastShimaStationId) || null;
+function getDestinationStation(destinationId, destinationName, companyCode = 'AR') {
+    const HigashijimaLineDirectTerminusByDestination = { 9: 'AH07', 10: 'AH09', 11: 'AH01' };
+    const HigashijimaLineDirectStationId = companyCode === 'AR' ? HigashijimaLineDirectTerminusByDestination[Number(destinationId)] : null;
+    if (HigashijimaLineDirectStationId) {
+        return ALL_STATIONS.find(station => station.id === HigashijimaLineDirectStationId) || null;
     }
     return ALL_STATIONS.find(station => station.name === destinationName) || null;
 }
@@ -276,9 +400,30 @@ function getFormationNumber(formation, customButtons) {
     return tens !== null && ones !== null ? `${tens}${ones}` : '';
 }
 
+function getRemoteTrainNumber(formation, customButtons) {
+    const modelName = String(formation.modelName || '').trim().toLowerCase();
+    if (!/^shirokawa_(?:3000|3070)/.test(modelName)) return formation.name && formation.name !== 'no_name' ? formation.name : '';
+
+    const readButton = buttonNumber => {
+        const rawValue = formation.dataMap?.[`Button${buttonNumber}`] ?? formation[`Button${buttonNumber}`] ?? customButtons?.[buttonNumber]?.value;
+        const value = Number(rawValue);
+        return Number.isInteger(value) && value >= 1 && value <= 10 ? value - 1 : null;
+    };
+    const digits = [5, 6, 7, 8].map(readButton);
+    const symbolId = Number(formation.dataMap?.Button9 ?? formation.Button9 ?? customButtons?.[9]?.value);
+    const symbols = { 1: 'H', 2: 'Y', 3: 'R', 4: 'N', 5: 'S' };
+    if (digits.some(digit => digit === null) || !symbols[symbolId]) return '';
+    return `${digits.join('')}${symbols[symbolId]}`;
+}
+
 function getTrainStopRows(item) {
     const stationId = station => station.branchId || station.id;
     const destinationId = Number(item.SZ_dist);
+    const destinationName = getCompanyDestinations(item.company.code)[destinationId] || item.finalDestName || '';
+    const isShinSugauraDestination = item.lineId === 'AR' && (
+        destinationName === AR_NOTE_DESTINATIONS.shinSugauraTerminus ||
+        AR_NOTE_DESTINATIONS.beyondShinSugaura.has(destinationName)
+    );
     const currentId = item.evalPos.type === 'station'
         ? item.evalPos.stationId
         : (item.evalPos.toStationId || item.evalPos.fromStationId);
@@ -296,16 +441,19 @@ function getTrainStopRows(item) {
         });
         return nearestIndex;
     };
-    const eastShimaTerminusByDestination = { 9: 'AH07', 10: 'AH09', 11: 'AH01' };
-    const eastShimaTerminusId = eastShimaTerminusByDestination[destinationId];
+    const HigashijimaLineDirectTerminusByDestination = { 9: 'AH07', 10: 'AH09', 11: 'AH01' };
+    const isHigashijimaLineDirectDestination = ['AH05', 'AH07', 'AH09'].includes(item.destStationId);
+    const HigashijimaLineDirectTerminusId = item.company.code === 'AR'
+        ? HigashijimaLineDirectTerminusByDestination[destinationId]
+        : (isHigashijimaLineDirectDestination ? item.destStationId : null);
     let visibleStations;
 
-    if (eastShimaTerminusId && (item.lineId === 'AR' || item.lineId === 'AH')) {
+    if (HigashijimaLineDirectTerminusId && (item.lineId === 'AR' || item.lineId === 'AH')) {
         const eastStations = ALL_STATIONS
             .filter(station => station.lineId === 'AH')
             .sort((a, b) => a.visualIndex - b.visualIndex);
         const junctionIndex = eastStations.findIndex(station => stationId(station) === 'AH03');
-        const terminusIndex = eastStations.findIndex(station => stationId(station) === eastShimaTerminusId);
+        const terminusIndex = eastStations.findIndex(station => stationId(station) === HigashijimaLineDirectTerminusId);
 
         if (item.lineId === 'AR') {
             const arStations = ALL_STATIONS
@@ -347,7 +495,6 @@ function getTrainStopRows(item) {
         const routeStations = ALL_STATIONS
             .filter(station => station.lineId === item.lineId)
             .sort((a, b) => a.visualIndex - b.visualIndex);
-        const isShinSugauraDestination = item.lineId === 'AR' && destinationId >= 12;
         let destinationStationId = isShinSugauraDestination ? 'AR61' : item.destStationId;
         const destinationStation = ALL_STATIONS.find(station => stationId(station) === destinationStationId);
         if (destinationStation && destinationStation.lineId !== item.lineId) {
@@ -368,14 +515,14 @@ function getTrainStopRows(item) {
         }
     }
 
-    const stopKey = AR_TYPES[item.SZ_type]?.id;
+    const stopKey = getCompanyTypes(item.company.code)[item.SZ_type]?.id;
     return visibleStations
-        .filter(station => item.lineId !== 'AR' || destinationId >= 12 || stationId(station) !== 'AR61')
+        .filter(station => stationId(station) !== 'AR61' || isShinSugauraDestination)
         .filter(station => !stopKey || station[stopKey] !== -1)
         .map(station => ({
             station,
             isCurrent: stationId(station) === currentId,
-            stops: stopKey ? station[stopKey] === 0 || station[stopKey] === 2 : false
+            stops: stopKey ? station[stopKey] === 0 : false
         }));
 }
 
@@ -388,22 +535,22 @@ function getTrainDirectionNote(item) {
     const sugaura = visualIndexFor('AR20');
     const shinSugaura = visualIndexFor('AR61');
     const progress = Number(item.evalPos.progress);
-    const destinationId = Number(item.SZ_dist);
+    const destinationName = getCompanyDestinations(item.company.code)[Number(item.SZ_dist)] || item.finalDestName || '';
     if (!Number.isFinite(progress)) return '';
 
     const isBetween = (start, end) => start !== undefined && end !== undefined &&
         progress >= Math.min(start, end) && progress <= Math.max(start, end);
 
-    if (item.dir === 'down' && isBetween(aruda, sugaura) && destinationId >= 6 && destinationId <= 11) {
+    if (item.dir === 'down' && isBetween(aruda, sugaura) && AR_NOTE_DESTINATIONS.ForSugauraAt0120.has(destinationName)) {
         return '須賀浦駅（KR線乗換）方面｜新須賀浦駅方面には行きません。';
     }
-    if (item.dir === 'up' && isBetween(kitaGawara, sugaura) && destinationId >= 1 && destinationId <= 6) {
+    if (item.dir === 'up' && isBetween(kitaGawara, sugaura) && AR_NOTE_DESTINATIONS.ForArudaAt2026AH.has(destinationName)) {
         return '須賀浦駅（KR線乗換）方面｜新須賀浦駅方面には行きません。';
     }
-    if (item.dir === 'down' && isBetween(aruda, shinSugaura) && destinationId === 12) {
-        return '新須賀浦駅止まり｜須賀浦駅方面には行きません。';
+    if (item.dir === 'down' && isBetween(aruda, shinSugaura) && destinationName === AR_NOTE_DESTINATIONS.TerminateAtShinSugaura) {
+        return '新須賀浦駅行｜須賀浦駅方面には行きません。';
     }
-    if (item.dir === 'down' && isBetween(aruda, shinSugaura) && destinationId >= 13 && destinationId <= 18) {
+    if (item.dir === 'down' && isBetween(aruda, shinSugaura) && AR_NOTE_DESTINATIONS.beyondShinSugaura.has(destinationName)) {
         return '新須賀浦・京北線・城川線方面｜須賀浦駅方面には行きません。';
     }
 
@@ -415,11 +562,23 @@ function renderTrainDetail(item, focusClose = false) {
     if (!modal || !item) return;
     const scrollArea = modal.querySelector('.train-detail-scroll');
     const previousScrollTop = scrollArea?.scrollTop || 0;
-    const typeLabel = TRAIN_TYPE_LABELS[item.SZ_type] || item.typeInfo.name;
+    const typeLabel = item.company.code === 'AR'
+        ? TRAIN_TYPE_LABELS[item.SZ_type] || item.typeInfo.name
+        : item.typeInfo.name;
     const iconColor = TRAIN_TYPE_COLORS[item.typeInfo.class] || '#555';
-    const directionNote = getTrainDirectionNote(item);
-    const eastShimaDirectNote = item.lineId === 'AR' && [9, 10, 11].includes(Number(item.SZ_dist));
-    const hasShinSugauraThroughService = item.lineId === 'AR' && Number(item.SZ_dist) > 12;
+    const hideDestination = Number(item.rawButton1) === 0;
+    const isDeadhead = isNonRevenueType(item.SZ_type, item.company.code) || item.typeInfo.class === 'type-oos';
+    const directionNote = isDeadhead
+        ? '回送電車です、ご利用頂けません。'
+        : (hideDestination ? '' : getTrainDirectionNote(item));
+    const arDestinationName = getCompanyDestinations(item.company.code)[Number(item.SZ_dist)] || item.finalDestName || '';
+    const HigashijimaLineDirectDirectNote = !isDeadhead && !hideDestination && item.lineId === 'AR' && AR_NOTE_DESTINATIONS.HigashijimaLineDirect.has(arDestinationName);
+    const hasShinSugauraThroughService = !isDeadhead && !hideDestination && item.lineId === 'AR' && AR_NOTE_DESTINATIONS.beyondShinSugaura.has(arDestinationName);
+    const hasKnownType = item.company.code === 'AR'
+        ? Object.prototype.hasOwnProperty.call(TRAIN_TYPE_LABELS, item.SZ_type)
+        : Object.prototype.hasOwnProperty.call(getCompanyTypes(item.company.code), item.SZ_type);
+    const hasTrainInfoError = !isDeadhead && (!item.rollingStock || !hasKnownType || !item.formation.trainNumber || (!hideDestination && !item.finalDestName));
+    const supportsFormationNumber = !['KK', 'SK'].includes(item.company.code);
     const carCount = item.formation.carCount ?? item.formation.cars?.length ?? item.formation.cars ??
         item.formation.formationLength ?? item.formation.trainLength;
     const arLineColor = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.color || '#28baa5';
@@ -428,15 +587,15 @@ function renderTrainDetail(item, focusClose = false) {
     const stopRows = stopRowItems.map(({ station, isCurrent, stops }) => {
         const lineColor = ROUTE_DATA.lines.find(line => line.lineId === station.lineId)?.color || '#28baa5';
         const stationNumber = station.branchId || station.id;
-        const isEastShimaJunction = stationNumber === 'AR26' && item.lineId === 'AR' && [9, 10, 11].includes(Number(item.SZ_dist));
-        const displayedStationNumber = isEastShimaJunction
+        const isHigashijimaLineDirectJunction = stationNumber === 'AR26' && stopRowItems.some(({ station: rowStation }) => rowStation.lineId === 'AH');
+        const displayedStationNumber = isHigashijimaLineDirectJunction
             ? `<span>AR26</span><span style="color:${ahLineColor}">AH03</span>`
             : escapeHtml(stationNumber);
         const passingNumberColor = station.lineId === 'AH' ? '#c8ead8' : '#bfe4eb';
         return `
-        <li class="train-stop-row ${stops ? 'stopping' : 'passing'} ${isCurrent ? 'current' : ''} ${isEastShimaJunction ? 'interline-junction' : ''}" data-station-id="${escapeHtml(station.branchId || station.id)}" data-line-id="${escapeHtml(station.lineId)}" style="--station-line-color:${lineColor}; --junction-line-color:${ahLineColor}; --passing-number-color:${passingNumberColor}">
+        <li class="train-stop-row ${stops ? 'stopping' : 'passing'} ${isCurrent ? 'current' : ''} ${isHigashijimaLineDirectJunction ? 'interline-junction' : ''}" data-station-id="${escapeHtml(station.branchId || station.id)}" data-line-id="${escapeHtml(station.lineId)}" style="--station-line-color:${lineColor}; --junction-line-color:${ahLineColor}; --passing-number-color:${passingNumberColor}">
             <span class="train-stop-station">
-                <span class="train-stop-number ${isEastShimaJunction ? 'interline' : ''}">${displayedStationNumber}</span>
+                <span class="train-stop-number ${isHigashijimaLineDirectJunction ? 'interline' : ''}">${displayedStationNumber}</span>
                 <span class="train-stop-name">${escapeHtml(station.name)}</span>
             </span>
             <span class="train-stop-status ${stops ? 'stopping' : 'passing'}">${stops ? '停車' : '通過'}</span>
@@ -452,6 +611,7 @@ function renderTrainDetail(item, focusClose = false) {
             : `linear-gradient(to bottom, ${arLineColor} 0%, ${arLineColor} ${eastLineStartPercent}%, ${ahLineColor} ${eastLineStartPercent}%, ${ahLineColor} 100%)`;
 
     modal.querySelector('.train-detail-content').innerHTML = `
+        ${hasTrainInfoError ? '<div class="train-detail-error">列車情報を取得できませんでした</div>' : ''}
         <div class="train-detail-summary">
             <div class="train-detail-icon-wrap ${item.typeInfo.class}">
                 <div class="train-icon train-icon-large" style="--train-icon-color:${iconColor}">
@@ -459,24 +619,26 @@ function renderTrainDetail(item, focusClose = false) {
                 <span class="train-detail-series">${escapeHtml(item.rollingStock || '')}</span>
             </div>
             <div class="train-detail-heading">
-                ${eastShimaDirectNote ? '<div class="train-detail-service-note">東島線直通</div>' : ''}
+                ${HigashijimaLineDirectDirectNote ? '<div class="train-detail-service-note">東島線直通</div>' : ''}
                 <div class="train-detail-destination-row">
                     <span class="train-detail-type ${item.typeInfo.class}" style="--service-type-color:${iconColor}">${escapeHtml(typeLabel)}</span>
-                    <span class="train-detail-destination">${escapeHtml(item.finalDestName || '行先不明')}行</span>
+                    <span class="train-detail-destination"${hideDestination ? ' style="visibility:hidden"' : ''}>${escapeHtml(item.finalDestName || '行先不明')}行</span>
                     <span class="train-detail-cars">${carCount !== undefined && carCount !== null && carCount !== '' ? `${escapeHtml(carCount)}両` : '両数不明'}</span>
                 </div>
                 <div class="train-detail-identifiers">
                     <span>列車番号 ${escapeHtml(item.formation.trainNumber || '---')}</span>
-                    <span>編成番号 ${escapeHtml(item.formation.formationNumber || '---')}</span>
+                    ${supportsFormationNumber ? `<span>編成番号 ${escapeHtml(item.formation.formationNumber || '---')}</span>` : ''}
                 </div>
                 ${directionNote ? `<div class="train-detail-direction-note">${escapeHtml(directionNote)}</div>` : ''}
             </div>
         </div>
-        <div class="train-stop-heading"><span>停車駅</span><span>停車区分</span></div>
-        <ol class="train-stop-list" style="--stop-line-gradient:${stopLineGradient}">
-            ${stopRows || '<li class="train-stop-empty">停車駅情報がありません</li>'}
-            ${hasShinSugauraThroughService ? '<li class="train-through-service-note">新須賀浦から京北線・城川線へ直通</li>' : ''}
-        </ol>
+        ${isDeadhead ? '' : `
+            <div class="train-stop-heading"><span>停車駅</span><span>停車区分</span></div>
+            <ol class="train-stop-list" style="--stop-line-gradient:${stopLineGradient}">
+                ${stopRows || '<li class="train-stop-empty">停車駅情報がありません</li>'}
+                ${hasShinSugauraThroughService ? '<li class="train-through-service-note">新須賀浦から京北線・城川線へ直通</li>' : ''}
+            </ol>
+        `}
     `;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -779,15 +941,10 @@ function setupWebSocket() {
 
 // --- Handlers ---
 async function fetchRemoteTrains() {
-    if (wsConnected) return; // Skip if WebSocket is connected
-
     try {
         const response = await fetch(REMOTE_URL);
-        if (!response.ok) return;
-
-        const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-            // HTML等が返ってきた場合（API未接続・プロキシ未起動・エラーページ）はパースせずに安全に終了
+        if (!response.ok) {
+            console.warn(`Train API returned HTTP ${response.status}`);
             return;
         }
 
@@ -804,23 +961,43 @@ async function fetchRemoteTrains() {
 
         remoteFormations = rawData.map(f => {
             const customButtons = Array.isArray(f.customButton) ? f.customButton : [];
+            const companyCode = getTrainCompany(f.name, f.modelName).code;
+            const typeButtonConfig = getRemoteCompanyButtonConfig(companyCode, 'type');
+            const destinationButtonConfig = getRemoteCompanyButtonConfig(companyCode, 'destination');
 
-            let szTypeValue = findRemoteButtonValue(customButtons, REMOTE_TYPE_VALUES, REMOTE_TYPE_LABEL_TO_VALUE, 0);
-            let szDistValue = findRemoteButtonValue(customButtons, REMOTE_DEST_VALUES, REMOTE_DEST_LABEL_TO_VALUE, 1);
+            let szTypeValue = findRemoteButtonValue(customButtons, typeButtonConfig.values, typeButtonConfig.labels, 0);
+            let szDistValue = findRemoteButtonValue(customButtons, destinationButtonConfig.values, destinationButtonConfig.labels, 1);
 
-            // Override with dataMap if available for more reliable parsing
+            if (companyCode !== 'AR') {
+                const typeFromLabel = getCompanyTypeValueFromLabel(companyCode, customButtons);
+                if (typeFromLabel !== null) {
+                    szTypeValue = typeFromLabel;
+                } else {
+                    const companyTypes = getCompanyTypes(companyCode);
+                    const configuredTypeValue = [f.dataMap?.SZ_type, f.dataMap?.Button0]
+                        .map(Number)
+                        .find(value => Object.prototype.hasOwnProperty.call(companyTypes, value));
+                    if (configuredTypeValue !== undefined) szTypeValue = configuredTypeValue;
+                }
+            }
+
+            // 有電ではSZ_typeを優先し、他社車は上記で会社別の種別値を解決する。
+            if (companyCode === 'AR' && f.dataMap) {
+                if (f.dataMap.SZ_type !== undefined && Number.isFinite(Number(f.dataMap.SZ_type))) szTypeValue = Number(f.dataMap.SZ_type);
+                else if (f.dataMap.Button0 !== undefined && Number.isFinite(Number(f.dataMap.Button0))) szTypeValue = Number(f.dataMap.Button0);
+            }
+
             if (f.dataMap) {
-                if (f.dataMap.SZ_type !== undefined) szTypeValue = Number(f.dataMap.SZ_type) || szTypeValue;
-                else if (f.dataMap.Button0 !== undefined) szTypeValue = Number(f.dataMap.Button0) || szTypeValue;
-
-                if (f.dataMap.SZ_dist !== undefined) szDistValue = Number(f.dataMap.SZ_dist) || szDistValue;
-                else if (f.dataMap.Button1 !== undefined) szDistValue = Number(f.dataMap.Button1) || szDistValue;
+                if (f.dataMap.SZ_dist !== undefined && Number.isFinite(Number(f.dataMap.SZ_dist))) szDistValue = Number(f.dataMap.SZ_dist);
+                else if (f.dataMap.Button1 !== undefined && Number.isFinite(Number(f.dataMap.Button1))) szDistValue = Number(f.dataMap.Button1);
             }
 
             return {
                 formationId: f.formation,
-                trainNumber: f.name,
+                trainNumber: getRemoteTrainNumber(f, customButtons),
                 modelName: f.modelName,
+                rawButton0: f.dataMap?.Button0 ?? f.Button0,
+                rawButton1: f.dataMap?.Button1 ?? f.Button1,
                 formationNumber: getFormationNumber(f, customButtons),
                 carCount: formationCarCounts.get(String(f.formation)) ?? null,
                 posX: f.pos.x,
@@ -836,7 +1013,7 @@ async function fetchRemoteTrains() {
                     Button0: szTypeValue,
                     Button1: szDistValue
                 },
-                remoteDestText: getRemoteDestinationText(customButtons, szDistValue),
+                remoteDestText: getRemoteDestinationText(customButtons, szDistValue, companyCode),
                 trainStateData: f.trainStateData,
                 isRemote: true
             };
@@ -844,7 +1021,7 @@ async function fetchRemoteTrains() {
 
         renderTrains(remoteFormations);
     } catch (err) {
-        // パースエラーや接続不可の時はコンソールを汚さず静かに無視
+        console.error('Failed to load train location data:', err);
     }
 }
 
@@ -950,11 +1127,17 @@ function handleAuthResponse(data) {
 /**
  * Train company/stock classification helpers
  */
-function getTrainCompany(trainName) {
+function getTrainCompany(trainName, modelName = '') {
+    const model = String(modelName).trim().toLowerCase();
+    if (model.startsWith('sz')) return { code: 'AR', name: '有田電鉄' };
+    if (model.startsWith('khr')) return { code: 'KK', name: '京北鉄道' };
+    if (model.startsWith('shirokawa')) return { code: 'SK', name: '城川電鉄' };
     if (!trainName) return { code: 'AR', name: '有田電鉄' };
-    const lower = trainName.toLowerCase();
+    const lower = String(trainName).toLowerCase();
     if (lower.startsWith('sz')) return { code: 'AR', name: '有田電鉄' };
+    if (lower.startsWith('khr')) return { code: 'KK', name: '京北鉄道' };
     if (lower.startsWith('kk')) return { code: 'KK', name: '京北鉄道' };
+    if (lower.startsWith('shirokawa')) return { code: 'SK', name: '城川電鉄' };
     if (lower.startsWith('sk')) return { code: 'SK', name: '城川電鉄' };
     if (lower.startsWith('mk')) return { code: 'MK', name: '三川電鉄' };
     if (lower.startsWith('mn')) return { code: 'MN', name: '美菜丘鉄道' };
@@ -962,19 +1145,16 @@ function getTrainCompany(trainName) {
 }
 
 function getRollingStock(trainName, company, modelName = '') {
-    const modelMatch = String(modelName).match(/(\d{4})/);
-    if (company.code === 'AR' && modelMatch) {
-        const series = Math.floor(parseInt(modelMatch[1], 10) / 1000) * 1000;
-        return `${series}系`;
-    }
-
-    if (!trainName) return '';
-    const match = trainName.match(/\d+/);
-    if (!match) return '';
-    const num = parseInt(match[0]);
+    const model = String(modelName).trim().toLowerCase();
     if (company.code === 'AR') {
-        const series = Math.floor(num / 1000) * 1000;
-        return `${series}系`;
+        if (model.startsWith('sz1')) return '有電1000系';
+        if (model.startsWith('sz2')) return '有電2000系';
+        if (model.startsWith('sz3')) return '有電3000系';
+    }
+    if (company.code === 'KK' && model.startsWith('khr4000')) return '京北4000系';
+    if (company.code === 'SK') {
+        if (['shirokawa_3000', 'shirokawa_3070'].some(prefix => model.startsWith(prefix))) return '城川3000系';
+        if (['shirokawa_3500', 'shirokawa_3550'].some(prefix => model.startsWith(prefix))) return '城川3500系';
     }
     return '';
 }
@@ -1007,13 +1187,24 @@ function renderTrains(formations) {
         const trainName = f.trainNumber || f.formationId;
 
         // --- Company & Filtering ---
-        const company = getTrainCompany(trainName);
+        const company = getTrainCompany(trainName, f.modelName);
         const rollingStock = getRollingStock(trainName, company, f.modelName);
-        if (company.code === 'AR' && SZ_type >= 13) return;
+        const modelName = String(f.modelName || '').trim().toLowerCase();
+        const allowedModelPrefix = {
+            AR: 'sz',
+            KK: 'khr',
+            SK: 'shirokawa'
+        }[company.code];
+        if (allowedModelPrefix && !modelName.startsWith(allowedModelPrefix)) return;
+        const rawButton0 = f.rawButton0;
+        if (company.code === 'AR' && rawButton0 !== undefined && rawButton0 !== null && rawButton0 !== '') {
+            const rawButton0Value = Number(rawButton0);
+            if ((rawButton0Value >= 0 && rawButton0Value <= 6) || rawButton0Value >= 13) return;
+        }
 
         // 行先駅IDを取得
-        const destName = AR_DISTS[SZ_dist] || DESTINATIONS[SZ_dist];
-        const destStation = getDestinationStation(SZ_dist, destName);
+        const destName = getCompanyDestinations(company.code)[SZ_dist] || f.remoteDestText;
+        const destStation = getDestinationStation(SZ_dist, destName, company.code);
         const destStationId = destStation ? (destStation.branchId || destStation.id) : null;
 
         // 前回の駅IDを編成ごとに記憶
@@ -1046,7 +1237,10 @@ function renderTrains(formations) {
         const routeDestination = ALL_STATIONS.find(station =>
             (station.branchId || station.id) === routeDestinationId
         );
-        if (lineId === 'AR' && Number(SZ_dist) >= 12) {
+        if (lineId === 'AR' && (
+            finalDestName === AR_NOTE_DESTINATIONS.shinSugauraTerminus ||
+            AR_NOTE_DESTINATIONS.beyondShinSugaura.has(finalDestName)
+        )) {
             routeDestinationId = 'AR61';
         } else if (routeDestination && routeDestination.lineId !== lineId) {
             routeDestinationId = lineId === 'AR' ? 'AR26' : 'AH03';
@@ -1067,7 +1261,7 @@ function renderTrains(formations) {
         const key = `${evalPos.stationId || evalPos.segment}_${dir}_${lineId}`;
         if (!groups[key]) groups[key] = [];
 
-        const typeInfo = getTypeInfo(SZ_type);
+        const typeInfo = getTypeInfo(SZ_type, company.code);
         groups[key].push({
             formation: f,
             typeInfo,
@@ -1080,6 +1274,7 @@ function renderTrains(formations) {
             lineId,
             trackCenter,
             company,
+            rawButton1: f.rawButton1,
             rollingStock
         });
     });
@@ -1093,7 +1288,7 @@ function renderTrains(formations) {
         group.forEach((item, index) => {
             const { formation: f, typeInfo, evalPos, dir, SZ_type, SZ_dist, finalDestName, trackCenter } = item;
             const el = document.createElement('div');
-            const isOOS = isNonRevenueType(SZ_type);
+            const isOOS = isNonRevenueType(SZ_type, item.company.code);
             const markerOffset = getTrainMarkerOffset(dir, index, group.length);
 
             const topPos = evalPos.progress * STATION_SPACING;
@@ -1138,7 +1333,7 @@ function renderTrains(formations) {
                     speed: f.speedKmh,
                     notch: f.notch,
                     signal: f.signal,
-                    destination: getHudDestination(SZ_type, SZ_dist),
+                    destination: getHudDestination(SZ_type, SZ_dist, item.company.code),
                     dataMap: f.dataMap
                 });
             }
@@ -1151,16 +1346,18 @@ function renderTrains(formations) {
 }
 
 function handleDriverAssist(data) {
+    const company = getTrainCompany(data.trainNumber, data.modelName);
     let szType = data.szType || 0;
     let szDist = data.szDist || 0;
 
     if (data.dataMap) {
-        if (data.dataMap.SZ_type !== undefined) szType = Number(data.dataMap.SZ_type) || szType;
-        else if (data.dataMap.Button0 !== undefined) szType = Number(data.dataMap.Button0) || szType;
+        if (data.dataMap.SZ_type !== undefined && Number.isFinite(Number(data.dataMap.SZ_type))) szType = Number(data.dataMap.SZ_type);
+        else if (data.dataMap.Button0 !== undefined && Number.isFinite(Number(data.dataMap.Button0))) szType = Number(data.dataMap.Button0);
 
-        if (data.dataMap.SZ_dist !== undefined) szDist = Number(data.dataMap.SZ_dist) || szDist;
-        else if (data.dataMap.Button1 !== undefined) szDist = Number(data.dataMap.Button1) || szDist;
+        if (data.dataMap.SZ_dist !== undefined && Number.isFinite(Number(data.dataMap.SZ_dist))) szDist = Number(data.dataMap.SZ_dist);
+        else if (data.dataMap.Button1 !== undefined && Number.isFinite(Number(data.dataMap.Button1))) szDist = Number(data.dataMap.Button1);
     }
+    const driverAssistType = getTypeInfo(szType, company.code);
 
     // Update HUD in PiP window
     updateHUD({
@@ -1168,8 +1365,8 @@ function handleDriverAssist(data) {
         notch: data.notch,
         signal: data.signal,
         trainNumber: (data.trainNumber && data.trainNumber !== 'no_name') ? data.trainNumber : '---',
-        type: TYPES[szType] || '---',
-        destination: getHudDestination(szType, szDist),
+        type: company.code === 'AR' ? TRAIN_TYPE_LABELS[szType] || '---' : driverAssistType.name,
+        destination: getHudDestination(szType, szDist, company.code),
         dataMap: data.dataMap
     });
 }
