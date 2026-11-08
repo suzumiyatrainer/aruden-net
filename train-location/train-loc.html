@@ -68,16 +68,20 @@
                     <h2>乗務員メニュー</h2>
 
                     <div id="auth-initial">
-                        <p>初回の方はMinecraft内で <code>/arutils register</code> を実行し、トークンを入力してください。</p>
-                        <input type="text" id="token-input" placeholder="トークンを入力" />
-                        <button id="btn-token-login">トークンでログイン</button>
+                        <input type="text" id="player-id-input" placeholder="Minecraft ID (UUID)" autocomplete="username" />
+                        <input type="password" id="password-input" placeholder="パスワード" autocomplete="current-password" />
+                        <button id="btn-password-login" type="button">ログイン</button>
 
-                        <div class="divider"><span>または</span></div>
-
-                        <p>2回目以降 (ID/パスワード)</p>
-                        <input type="text" id="player-id-input" placeholder="Minecraft ID (UUID)" />
-                        <input type="password" id="password-input" placeholder="パスワード" />
-                        <button id="btn-password-login">ログイン</button>
+                        <div class="auth-help-wrap">
+                            <button id="btn-toggle-token-help" type="button" class="auth-help-link">
+                                初めてですか？・パスワードをお忘れですか？
+                            </button>
+                            <div id="auth-token-section" class="auth-token-section" style="display: none;">
+                                <p>Minecraft内で <code>/arutils register</code> を実行し、発行されたトークンを入力してください。</p>
+                                <input type="text" id="token-input" placeholder="トークンを入力" autocomplete="one-time-code" />
+                                <button id="btn-token-login" type="button">トークンで認証</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="auth-set-password" style="display: none;">

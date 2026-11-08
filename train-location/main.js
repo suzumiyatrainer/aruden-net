@@ -1606,6 +1606,8 @@ function checkAuthStatus() {
         document.getElementById('auth-initial').style.display = 'block';
         document.getElementById('auth-set-password').style.display = 'none';
         document.getElementById('auth-success').style.display = 'none';
+        const tokenSection = document.getElementById('auth-token-section');
+        if (tokenSection) tokenSection.style.display = 'none';
 
         // Reset header icon
         document.getElementById('user-icon-placeholder').style.display = 'flex';
@@ -1677,6 +1679,16 @@ function setupEventListeners() {
     document.getElementById('btn-password-login').addEventListener('click', handlePasswordLogin);
     document.getElementById('btn-set-password').addEventListener('click', handleSetPassword);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
+
+    const toggleTokenHelpBtn = document.getElementById('btn-toggle-token-help');
+    if (toggleTokenHelpBtn) {
+        toggleTokenHelpBtn.addEventListener('click', () => {
+            const tokenSection = document.getElementById('auth-token-section');
+            if (!tokenSection) return;
+            const isHidden = tokenSection.style.display === 'none';
+            tokenSection.style.display = isHidden ? 'block' : 'none';
+        });
+    }
 
     if (routeMap) {
         routeMap.addEventListener('scroll', saveRouteMapScroll, { passive: true });

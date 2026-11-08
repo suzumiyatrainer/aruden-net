@@ -909,6 +909,50 @@ body {
     color: #1c1e21;
 }
 
+.auth-help-wrap {
+    margin-top: 14px;
+    text-align: center;
+}
+
+#auth-panel button.auth-help-link {
+    width: auto;
+    padding: 4px 6px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+#auth-panel button.auth-help-link:hover {
+    color: var(--text-primary);
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.auth-token-section {
+    margin-top: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+}
+
+.auth-token-section p {
+    font-size: 0.82rem !important;
+    margin-bottom: 8px !important;
+}
+
+.auth-token-section code {
+    background: #f1f5f9;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+}
+
 #auth-panel .error-msg {
     color: var(--error-color);
     margin-top: 10px;

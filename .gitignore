@@ -1,6 +1,23 @@
 # top
 aruden-net.code-workspace
 
+# secrets & credentials (never commit to GitHub)
+.env
+.env.*
+*.env
+*secret*
+*credential*
+*password*
+*token*
+*.key
+*.pem
+users.json
+auth.json
+accounts.json
+*.db
+*.sqlite
+*.sqlite3
+
 # train-location
 train-location/.api-proxy/
 train-location/.waypoints/
