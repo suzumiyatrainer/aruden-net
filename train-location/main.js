@@ -1126,8 +1126,9 @@ async function fetchPlayerNameFromUUID(uuid) {
 }
 
 function handleAuthResponse(data) {
-    if (data.status === 'error') {
-        const errMsg = data.message || '認証に失敗しました。';
+    console.log('🔐 handleAuthResponse:', data);
+    if (data.status === 'error' || data.error) {
+        const errMsg = data.message || data.error || '認証に失敗しました。';
         currentPlayerData = null;
         localStorage.removeItem('aruden_player_id');
         sessionStorage.removeItem('aruden_session_id');
@@ -1177,6 +1178,8 @@ function handleAuthResponse(data) {
         }
     } else if (data.message) {
         showAuthSuccess(data.message);
+    } else {
+        showAuthError(`サーバー応答: ${JSON.stringify(data)}`);
     }
 }
 
@@ -1647,7 +1650,7 @@ function handleTokenLogin() {
         return;
     }
     if (ws && ws.readyState === WebSocket.OPEN) {
-        showAuthError('');
+        showAuthSuccess('認証トークンを確認中...');
         ws.send(JSON.stringify({ action: 'auth_token', token }));
     } else {
         showAuthError('サーバーに接続されていません。');
@@ -1661,7 +1664,7 @@ function handleForgotTokenLogin() {
         return;
     }
     if (ws && ws.readyState === WebSocket.OPEN) {
-        showAuthError('');
+        showAuthSuccess('認証トークンを確認中...');
         ws.send(JSON.stringify({ action: 'auth_token', token }));
     } else {
         showAuthError('サーバーに接続されていません。');
