@@ -909,48 +909,50 @@ body {
     color: #1c1e21;
 }
 
-.auth-help-wrap {
+.auth-help-links {
     margin-top: 14px;
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 2px;
+    font-size: 0.78rem;
 }
 
-#auth-panel button.auth-help-link {
-    width: auto;
-    padding: 4px 6px;
+.auth-help-link {
+    color: #1d4ed8;
     font-size: 0.78rem;
     font-weight: 500;
-    color: var(--text-secondary);
-    background: transparent;
-    border: none;
-    border-radius: 4px;
     text-decoration: underline;
     text-underline-offset: 3px;
     cursor: pointer;
+    padding: 2px 4px;
 }
 
-#auth-panel button.auth-help-link:hover {
-    color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.04);
+.auth-help-link:hover {
+    color: #1e40af;
 }
 
-.auth-token-section {
-    margin-top: 12px;
-    padding-top: 14px;
-    border-top: 1px solid var(--border-color);
-    text-align: left;
+.auth-help-sep {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    user-select: none;
 }
 
-.auth-token-section p {
-    font-size: 0.82rem !important;
-    margin-bottom: 8px !important;
-}
-
-.auth-token-section code {
+#auth-panel code {
     background: #f1f5f9;
     padding: 2px 5px;
     border-radius: 4px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.8rem;
+}
+
+#auth-panel .success-msg {
+    color: var(--success-color);
+    margin-top: 8px;
+    margin-bottom: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
 }
 
 #auth-panel .error-msg {

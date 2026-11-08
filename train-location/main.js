@@ -1556,14 +1556,41 @@ function setStatus(text, className = '') {
 }
 
 function showAuthError(msg) {
+    authError.className = 'error-msg';
     authError.textContent = msg;
+}
+
+function showAuthSuccess(msg) {
+    authError.className = 'success-msg';
+    authError.textContent = msg;
+}
+
+function showAuthSubView(viewName) {
+    showAuthError('');
+    const initialEl = document.getElementById('auth-initial');
+    const firstTimeEl = document.getElementById('auth-first-time');
+    const forgotPwdEl = document.getElementById('auth-forgot-pwd');
+    const setPwdEl = document.getElementById('auth-set-password');
+    const successEl = document.getElementById('auth-success');
+
+    if (initialEl) initialEl.style.display = viewName === 'initial' ? 'block' : 'none';
+    if (firstTimeEl) firstTimeEl.style.display = viewName === 'first-time' ? 'block' : 'none';
+    if (forgotPwdEl) forgotPwdEl.style.display = viewName === 'forgot-pwd' ? 'block' : 'none';
+    if (setPwdEl) setPwdEl.style.display = viewName === 'set-password' ? 'block' : 'none';
+    if (successEl) successEl.style.display = viewName === 'success' ? 'block' : 'none';
+
+    if (viewName === 'forgot-pwd') {
+        const mainId = document.getElementById('player-id-input')?.value?.trim();
+        const forgotIdInput = document.getElementById('forgot-player-id-input');
+        if (forgotIdInput && mainId && !forgotIdInput.value) {
+            forgotIdInput.value = mainId;
+        }
+    }
 }
 
 function checkAuthStatus() {
     if (currentPlayerData && (currentPlayerData.status === 'authenticated' || currentPlayerData.status === 'password_set')) {
-        document.getElementById('auth-initial').style.display = 'none';
-        document.getElementById('auth-set-password').style.display = 'none';
-        document.getElementById('auth-success').style.display = 'block';
+        showAuthSubView('success');
 
         // Determine display name: use resolved name, skip 'Unknown' and raw UUIDs
         let dispName = currentPlayerData.name;
@@ -1598,16 +1625,10 @@ function checkAuthStatus() {
         document.getElementById('profile-avatar').src = avatarUrl;
 
     } else if (currentPlayerData && currentPlayerData.status === 'password_required') {
-        document.getElementById('auth-initial').style.display = 'none';
-        document.getElementById('auth-set-password').style.display = 'block';
-        document.getElementById('auth-success').style.display = 'none';
+        showAuthSubView('set-password');
     }
     else {
-        document.getElementById('auth-initial').style.display = 'block';
-        document.getElementById('auth-set-password').style.display = 'none';
-        document.getElementById('auth-success').style.display = 'none';
-        const tokenSection = document.getElementById('auth-token-section');
-        if (tokenSection) tokenSection.style.display = 'none';
+        showAuthSubView('initial');
 
         // Reset header icon
         document.getElementById('user-icon-placeholder').style.display = 'flex';
@@ -1618,9 +1639,30 @@ function checkAuthStatus() {
 }
 
 function handleTokenLogin() {
-    const token = document.getElementById('token-input').value.trim();
+    const token = document.getElementById('token-input')?.value?.trim();
     if (token && ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ action: 'auth_token', token }));
+    }
+}
+
+function handleForgotTokenLogin() {
+    const token = document.getElementById('forgot-token-input')?.value?.trim();
+    if (token && ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'auth_token', token }));
+    }
+}
+
+function handleSendResetToken() {
+    const playerId = document.getElementById('forgot-player-id-input')?.value?.trim();
+    if (!playerId) {
+        showAuthError('Minecraft ID (またはUUID) を入力してください。');
+        return;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ action: 'request_reset_token', playerId }));
+        showAuthSuccess('Minecraftのチャットへ認証トークンの送信をリクエストしました。届いたトークンを下の欄に入力してください。');
+    } else {
+        showAuthError('サーバーに接続されていません。');
     }
 }
 
@@ -1653,6 +1695,8 @@ function handleLogout() {
     checkAuthStatus();
     document.getElementById('password-input').value = '';
     document.getElementById('token-input').value = '';
+    const forgotTokenInput = document.getElementById('forgot-token-input');
+    if (forgotTokenInput) forgotTokenInput.value = '';
     document.getElementById('new-password-input').value = '';
 }
 
@@ -1680,15 +1724,25 @@ function setupEventListeners() {
     document.getElementById('btn-set-password').addEventListener('click', handleSetPassword);
     document.getElementById('btn-logout').addEventListener('click', handleLogout);
 
-    const toggleTokenHelpBtn = document.getElementById('btn-toggle-token-help');
-    if (toggleTokenHelpBtn) {
-        toggleTokenHelpBtn.addEventListener('click', () => {
-            const tokenSection = document.getElementById('auth-token-section');
-            if (!tokenSection) return;
-            const isHidden = tokenSection.style.display === 'none';
-            tokenSection.style.display = isHidden ? 'block' : 'none';
-        });
-    }
+    document.getElementById('btn-send-reset-token')?.addEventListener('click', handleSendResetToken);
+    document.getElementById('btn-forgot-token-login')?.addEventListener('click', handleForgotTokenLogin);
+
+    document.getElementById('link-first-time')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showAuthSubView('first-time');
+    });
+    document.getElementById('link-forgot-pwd')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showAuthSubView('forgot-pwd');
+    });
+    document.getElementById('link-back-from-first')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showAuthSubView('initial');
+    });
+    document.getElementById('link-back-from-forgot')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showAuthSubView('initial');
+    });
 
     if (routeMap) {
         routeMap.addEventListener('scroll', saveRouteMapScroll, { passive: true });

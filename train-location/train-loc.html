@@ -72,15 +72,37 @@
                         <input type="password" id="password-input" placeholder="パスワード" autocomplete="current-password" />
                         <button id="btn-password-login" type="button">ログイン</button>
 
-                        <div class="auth-help-wrap">
-                            <button id="btn-toggle-token-help" type="button" class="auth-help-link">
-                                初めてですか？・パスワードをお忘れですか？
-                            </button>
-                            <div id="auth-token-section" class="auth-token-section" style="display: none;">
-                                <p>Minecraft内で <code>/arutils register</code> を実行し、発行されたトークンを入力してください。</p>
-                                <input type="text" id="token-input" placeholder="トークンを入力" autocomplete="one-time-code" />
-                                <button id="btn-token-login" type="button">トークンで認証</button>
-                            </div>
+                        <div class="auth-help-links">
+                            <a href="#" id="link-first-time" class="auth-help-link">初めての方</a>
+                            <span class="auth-help-sep">・</span>
+                            <a href="#" id="link-forgot-pwd" class="auth-help-link">パスワードをお忘れの方</a>
+                        </div>
+                    </div>
+
+                    <!-- 初回登録画面 -->
+                    <div id="auth-first-time" style="display: none;">
+                        <p>Minecraft内で <code>/arutils register</code> を実行し、チャットに表示された認証トークンを入力してください。</p>
+                        <input type="text" id="token-input" placeholder="トークンを入力" autocomplete="one-time-code" />
+                        <button id="btn-token-login" type="button">トークンで認証</button>
+                        <div class="auth-help-links">
+                            <a href="#" id="link-back-from-first" class="auth-help-link">← ログイン画面に戻る</a>
+                        </div>
+                    </div>
+
+                    <!-- パスワード再設定（トークン送信＆認証）画面 -->
+                    <div id="auth-forgot-pwd" style="display: none;">
+                        <div id="forgot-step-request">
+                            <p>Minecraft ID (またはUUID) を入力してください。Minecraft内のチャットに認証トークンを送信します。</p>
+                            <input type="text" id="forgot-player-id-input" placeholder="Minecraft ID (UUID)" autocomplete="username" />
+                            <button id="btn-send-reset-token" type="button">チャットにトークンを送信</button>
+                        </div>
+                        <div id="forgot-step-token" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,0.08);">
+                            <p>チャットに届いた認証トークンを入力してください（またはMinecraft内で <code>/arutils register</code> を実行）。</p>
+                            <input type="text" id="forgot-token-input" placeholder="認証トークンを入力" autocomplete="one-time-code" />
+                            <button id="btn-forgot-token-login" type="button">トークンで認証</button>
+                        </div>
+                        <div class="auth-help-links">
+                            <a href="#" id="link-back-from-forgot" class="auth-help-link">← ログイン画面に戻る</a>
                         </div>
                     </div>
 
