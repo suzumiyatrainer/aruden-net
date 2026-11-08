@@ -1127,12 +1127,12 @@ async function fetchPlayerNameFromUUID(uuid) {
 
 function handleAuthResponse(data) {
     if (data.status === 'error') {
-        showAuthError(data.message);
+        const errMsg = data.message || '認証に失敗しました。';
         currentPlayerData = null;
         localStorage.removeItem('aruden_player_id');
         sessionStorage.removeItem('aruden_session_id');
         sessionStorage.removeItem('aruden_session_pwd');
-        checkAuthStatus();
+        showAuthError(errMsg);
         return;
     }
 
@@ -1143,7 +1143,9 @@ function handleAuthResponse(data) {
         status: data.status
     };
 
-    localStorage.setItem('aruden_player_id', data.playerId);
+    if (data.playerId) {
+        localStorage.setItem('aruden_player_id', data.playerId);
+    }
 
     // If successfully authenticated, store for session persistence
     if (data.status === 'authenticated' || data.status === 'password_set') {
@@ -1151,7 +1153,7 @@ function handleAuthResponse(data) {
             document.getElementById('new-password-input').value ||
             sessionStorage.getItem('aruden_session_pwd');
 
-        if (pwd) {
+        if (pwd && data.playerId) {
             sessionStorage.setItem('aruden_session_id', data.playerId);
             sessionStorage.setItem('aruden_session_pwd', pwd);
         }
@@ -1160,9 +1162,7 @@ function handleAuthResponse(data) {
     showAuthError('');
 
     if (data.status === 'password_required') {
-        authInit.style.display = 'none';
-        authSetPwd.style.display = 'block';
-        authSuccess.style.display = 'none';
+        showAuthSubView('set-password');
     } else if (data.status === 'authenticated' || data.status === 'password_set') {
         // If name is missing/Unknown, try to resolve it from UUID before updating UI
         if ((!data.name || data.name === 'Unknown') && data.uuid) {
@@ -1175,6 +1175,8 @@ function handleAuthResponse(data) {
         } else {
             checkAuthStatus();
         }
+    } else if (data.message) {
+        showAuthSuccess(data.message);
     }
 }
 
@@ -1640,15 +1642,29 @@ function checkAuthStatus() {
 
 function handleTokenLogin() {
     const token = document.getElementById('token-input')?.value?.trim();
-    if (token && ws && ws.readyState === WebSocket.OPEN) {
+    if (!token) {
+        showAuthError('認証トークンを入力してください。');
+        return;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        showAuthError('');
         ws.send(JSON.stringify({ action: 'auth_token', token }));
+    } else {
+        showAuthError('サーバーに接続されていません。');
     }
 }
 
 function handleForgotTokenLogin() {
     const token = document.getElementById('forgot-token-input')?.value?.trim();
-    if (token && ws && ws.readyState === WebSocket.OPEN) {
+    if (!token) {
+        showAuthError('認証トークンを入力してください。');
+        return;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        showAuthError('');
         ws.send(JSON.stringify({ action: 'auth_token', token }));
+    } else {
+        showAuthError('サーバーに接続されていません。');
     }
 }
 
@@ -1669,8 +1685,15 @@ function handleSendResetToken() {
 function handlePasswordLogin() {
     const playerId = document.getElementById('player-id-input').value.trim();
     const pwd = document.getElementById('password-input').value;
-    if (playerId && pwd && ws && ws.readyState === WebSocket.OPEN) {
+    if (!playerId || !pwd) {
+        showAuthError('IDとパスワードを入力してください。');
+        return;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        showAuthError('');
         ws.send(JSON.stringify({ action: 'auth_login', playerId, password: pwd }));
+    } else {
+        showAuthError('サーバーに接続されていません。');
     }
 }
 
