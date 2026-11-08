@@ -256,6 +256,14 @@ const loggedInPlayerMsg = document.getElementById('logged-in-player');
 // Route settings
 const STATION_SPACING = 125; // pixels between stations (+25% height increase)
 
+function isMobileViewport() {
+    return window.innerWidth <= 768;
+}
+
+function getBranchOffset() {
+    return isMobileViewport() ? 105 : 150;
+}
+
 // Map elements
 const trainElements = new Map();
 
@@ -745,7 +753,7 @@ function restoreRouteMapScroll() {
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 routeMap.scrollTo(
-                    Number.isFinite(left) ? left : routeMap.scrollLeft,
+                    isMobileViewport() ? 0 : (Number.isFinite(left) ? left : routeMap.scrollLeft),
                     Number.isFinite(top) ? top : routeMap.scrollTop
                 );
             });
@@ -763,9 +771,14 @@ function renderStations() {
     const oldBgs = routeContainer.querySelectorAll('.route-line-bg');
     oldBgs.forEach(bg => bg.remove());
 
-    // 画面幅の 1/4 (25%) 点を現在選択中の路線の trackCenter に設定
+    const isMobile = isMobileViewport();
+    const branchOffset = getBranchOffset();
     const viewWidth = routeMap ? routeMap.clientWidth : window.innerWidth;
-    const mainTrackCenter = Math.max(350, Math.round(viewWidth * 0.25)) + 55;
+    // スマホではCSSの zoom: 0.72 を考慮した論理幅の中で中央やや右寄りに配置し、PCでは従来通り画面幅の1/4+55に配置
+    const mobileLogicalWidth = Math.round(viewWidth / 0.72);
+    const mainTrackCenter = isMobile
+        ? Math.max(255, Math.min(310, Math.round(mobileLogicalWidth * 0.52)))
+        : Math.max(350, Math.round(viewWidth * 0.25)) + 55;
 
     // 現在選択されている路線のみを取得
     const activeLines = ROUTE_DATA.lines.filter(l => l.lineId === currentLineId);
@@ -784,7 +797,7 @@ function renderStations() {
         const line = ROUTE_DATA.lines.find(item => item.lineId === station.lineId);
         if (!line) return;
         const isBranch = ROUTE_DATA.branches.some(branch => branch.branchId === station.branchId);
-        station.trackCenter = line.trackCenter + (isBranch ? 150 : 0);
+        station.trackCenter = line.trackCenter + (isBranch ? branchOffset : 0);
     });
 
     const activeBranches = ROUTE_DATA.branches.filter(br => br.parentLine === currentLineId);
@@ -813,7 +826,7 @@ function renderStations() {
         const branchBottomY = nextYPos + quarterOffset; // 2025px
 
         const mainX = parentLine.trackCenter;
-        const branchX = mainX + 150;
+        const branchX = mainX + branchOffset;
         const parentLineColor = parentLine.color;
         const trackBgColor = parentLine.trackBgColor || '#bfe4eb';
 
@@ -824,6 +837,11 @@ function renderStations() {
         const zhKo = [st.zh, st.ko].filter(s => s).join(' / ') || '';
 
         const startX = mainX + 2;
+
+        const branchConnectorWidth = isMobile ? 160 : 460;
+        const branchLabelLeft = isMobile ? (branchX + 14) : (branchX + 230);
+        const branchSubWidth = isMobile ? 136 : 230;
+        const branchIdBoxLeft = isMobile ? (branchX + 166) : (branchX + 470);
 
         const containerDiv = document.createElement('div');
         containerDiv.className = 'branch-bypass-group';
@@ -843,18 +861,18 @@ function renderStations() {
 
             <!-- 新須賀浦 (AR61) マーカ -->
             <div class="station-marker branch-station" style="top:${branchYPos}px;">
-                <div class="station-connector" style="left:${branchX}px; width:460px; background-color:${parentLineColor}; top:6px; z-index:0;"></div>
+                <div class="station-connector" style="left:${branchX}px; width:${branchConnectorWidth}px; background-color:${parentLineColor}; top:6px; z-index:0;"></div>
                 <div class="station-node" style="left:${branchX}px; top:0; border-color:${parentLineColor}"></div>
-                <div class="station-name-main-group" style="left:${branchX + 230}px">
+                <div class="station-name-main-group" style="left:${branchLabelLeft}px">
                     <div class="station-name">${st.name}</div>
                     <div class="station-en-name">${st.en || ''}</div>
                 </div>
-                <div class="station-id-box" style="left:${branchX + 470}px; top:-20px; border-color:${br.color}">
+                <div class="station-id-box" style="left:${branchIdBoxLeft}px; top:-20px; border-color:${br.color}">
                     <div class="station-id-prefix">${prefix}</div>
                     <div class="station-id-number">${number}</div>
                     ${generateStopBadgesHTML(st)}
                 </div>
-                <div class="station-sub-name-group" style="left:${branchX + 230}px; width:230px; text-align:right; top:8px;">
+                <div class="station-sub-name-group" style="left:${branchLabelLeft}px; width:${branchSubWidth}px; text-align:right; top:8px;">
                     <div class="station-zh-ko-name">${zhKo}</div>
                 </div>
             </div>
@@ -894,10 +912,11 @@ function renderStations() {
 
             // Line-specific positioning
             const nodeLeft = line.trackCenter;
-            const labelLeft = 30;
+            const labelLeft = isMobile ? 12 : 30;
+            const textOffset = isMobile ? 50 : 54;
             const isExtended = (st.id === 'AR19' || st.id === 'AR20');
-            const targetX = isExtended ? (nodeLeft + 150) : nodeLeft;
-            const connectorWidth = targetX - (labelLeft + 54);
+            const targetX = isExtended ? (nodeLeft + branchOffset) : nodeLeft;
+            const connectorWidth = targetX - (labelLeft + textOffset);
             const idBoxLeft = labelLeft;
 
             stDiv.innerHTML = `
@@ -906,14 +925,14 @@ function renderStations() {
                     <div class="station-id-number">${number}</div>
                     ${generateStopBadgesHTML(st)}
                 </div>
-                <div class="station-name-main-group" style="left:${labelLeft + 54}px">
+                <div class="station-name-main-group" style="left:${labelLeft + textOffset}px">
                     <div class="station-name">${st.name}</div>
                     <div class="station-en-name">${st.en || ''}</div>
                 </div>
-                <div class="station-sub-name-group" style="left:${labelLeft + 54}px">
+                <div class="station-sub-name-group" style="left:${labelLeft + textOffset}px">
                     <div class="station-zh-ko-name">${zhKo}</div>
                 </div>
-                <div class="station-connector" style="left:${labelLeft + 54}px; width:${connectorWidth}px; background-color:${line.color}; top:6px; z-index:0;"></div>
+                <div class="station-connector" style="left:${labelLeft + textOffset}px; width:${connectorWidth}px; background-color:${line.color}; top:6px; z-index:0;"></div>
                 <div class="station-node" style="left:${nodeLeft}px; top:0; border-color:${line.color}"></div>
             `;
             stationsContainer.appendChild(stDiv);
@@ -1313,13 +1332,14 @@ function renderTrains(formations) {
             ? evalPos.stationId
             : (evalPos.toStationId || evalPos.fromStationId);
         let trackCenter = evalPos.trackCenter || 960;
+        const branchOffset = getBranchOffset();
         const kitaYaeProgress = ALL_STATIONS.find(station => (station.branchId || station.id) === 'AR19')?.visualIndex ?? 18;
         const sugauraProgress = ALL_STATIONS.find(station => (station.branchId || station.id) === 'AR20')?.visualIndex ?? 20;
         const isBetweenKitaYaeAndSugaura = Number(evalPos.progress) >= kitaYaeProgress - 0.05 &&
             Number(evalPos.progress) <= sugauraProgress + 0.05;
         if (lineId === 'AR' && isShinSugauraDirection && isBetweenKitaYaeAndSugaura) {
             const arTrackCenter = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.trackCenter || 960;
-            trackCenter = arTrackCenter + 150;
+            trackCenter = arTrackCenter + branchOffset;
         }
         const isLeavingShinSugauraBranch = prevStationId === 'AR61' && (
             evalPos.type === 'transit' || evalPos.stationId === 'AR20' || evalPos.stationId === 'AR19'
@@ -1329,12 +1349,12 @@ function renderTrains(formations) {
         if (lineId === 'AR' && isArudaBoundFromShinSugaura &&
             (currentStationId === 'AR61' || isLeavingShinSugauraBranch || isArrivingAtKitaYaeFromBranch)) {
             const arTrackCenter = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.trackCenter || 960;
-            trackCenter = arTrackCenter + 150;
+            trackCenter = arTrackCenter + branchOffset;
         }
         if (lineId === 'AR' && branchArrivalHoldMap.get(f.formationId) === 'AR19' &&
             evalPos.type === 'station' && evalPos.stationId === 'AR19') {
             const arTrackCenter = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.trackCenter || 960;
-            trackCenter = arTrackCenter + 150;
+            trackCenter = arTrackCenter + branchOffset;
         }
 
         // 線路図の左右レーンと矢印は、列車データの座標方向ではなく行先への駅順で決める。

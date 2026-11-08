@@ -1434,12 +1434,39 @@ body {
     }
 
     .route-map {
-        padding-top: 30px;
+        padding-top: 28px;
         padding-bottom: 80px;
     }
 
     .route-container {
-        min-width: 1100px;
+        min-width: 100%;
+        zoom: 0.72;
+    }
+
+    .station-name-main-group {
+        gap: 6px;
+    }
+
+    .station-name {
+        font-size: 1.05rem;
+    }
+
+    .station-en-name {
+        font-size: 0.78rem;
+    }
+
+    .station-zh-ko-name {
+        font-size: 0.7rem;
+    }
+
+    .station-stop-badges {
+        max-width: 240px;
+    }
+
+    .transfer-line-name {
+        max-width: 140px;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .modal-content {
