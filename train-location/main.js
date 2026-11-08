@@ -109,6 +109,7 @@ const STOP_TYPES = [
 const AR_NOTE_DESTINATIONS = {
     ForSugauraAt0120: new Set(['須賀浦', '想掛', '桜地', '東島', '北河原', '高見浜', "芝向"]),
     ForArudaAt2026AH: new Set(['有田', '有電高柳', '蹄光寺坂', '本涼瀬', '十全', '須賀浦', "八重川"]),
+    ForArudaFromShinSugaura: new Set(['有田', '有電高柳', '蹄光寺坂', '本涼瀬', '十全', '八重川']),
     TerminateAtShinSugaura: '新須賀浦',
     HigashijimaLineDirect: new Set(['東島', '北河原', '高見浜', "芝向"]),
     beyondShinSugaura: new Set(['松森川', "北海王", '金城', '糸里', '葛海中央', '城川芝浦', "島見が丘", "春海", '鴫野華瀬'])
@@ -123,15 +124,18 @@ let currentPlayerData = null;
 let assistPiPWindow = null;
 let remoteFormations = [];
 let activeTrainFormationId = null;
+let trackedTrainFormationId = null;
+const lastStationMap = new Map();
+const branchArrivalHoldMap = new Map();
 let currentLineId = 'AR';
 
 function generateStopBadgesHTML(st) {
     if (!st) return '';
-    const badges = STOP_TYPES.filter(type => st[type.key] === 0)
+    const badges = STOP_TYPES.filter(type => st[type.key] === 0 || st[type.key] === 2)
         .map(type => {
             const isPartial = st[type.key] === 2;
             if (isPartial) {
-                const note = "平日朝9:00までの須賀浦・新須賀浦方面行のみ停車";
+                const note = '平日朝の須賀浦／新須賀浦方面のみ停車';
                 return `<span class="stop-badge partial-stop" tabindex="0" style="background-color:${type.color};">${type.name}<span class="badge-tooltip">${note}</span></span>`;
             }
             return `<span class="stop-badge" style="background-color:${type.color};">${type.name}</span>`;
@@ -671,6 +675,31 @@ function closeTrainDetail() {
     activeTrainFormationId = null;
 }
 
+function scrollTrackedTrainIntoPosition(marker) {
+    if (!routeMap || !marker) return;
+
+    const mapRect = routeMap.getBoundingClientRect();
+    const markerRect = marker.getBoundingClientRect();
+    const targetViewportY = routeMap.clientTop + 50 + (STATION_SPACING * 2);
+    const targetScrollTop = routeMap.scrollTop + markerRect.top - mapRect.top - targetViewportY;
+    const maxScrollTop = Math.max(0, routeMap.scrollHeight - routeMap.clientHeight);
+    const clampedScrollTop = Math.max(0, Math.min(maxScrollTop, targetScrollTop));
+
+    if (Math.abs(clampedScrollTop - routeMap.scrollTop) > 3) {
+        routeMap.scrollTo({ top: clampedScrollTop, behavior: 'smooth' });
+    }
+}
+
+function getRouteStationScrollPoints() {
+    if (!routeMap) return [];
+
+    const mapRect = routeMap.getBoundingClientRect();
+    return Array.from(routeMap.querySelectorAll('.station-marker'))
+        .map(marker => routeMap.scrollTop + marker.getBoundingClientRect().top - mapRect.top - 50)
+        .sort((a, b) => a - b)
+        .filter((point, index, points) => index === 0 || Math.abs(point - points[index - 1]) > 1);
+}
+
 function saveRouteMapScroll() {
     if (!routeMap) return;
 
@@ -684,6 +713,10 @@ function centerStationNode() {
     if (!routeMap) return;
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+            if (window.innerWidth <= 768) {
+                routeMap.scrollLeft = 0;
+                return;
+            }
             const mainTrackCenter = ROUTE_DATA.lines[0]?.trackCenter ?? 960;
             const targetLeft = mainTrackCenter - (routeMap.clientWidth / 2);
             routeMap.scrollLeft = Math.max(0, targetLeft);
@@ -1182,7 +1215,6 @@ function renderTrains(formations) {
     const processedFormations = Array.from(uniqueFormations.values());
 
     // 駅間判定のため、各編成ごとに前回の駅IDを保持する（簡易: formationIdごとにメモリ）
-    const lastStationMap = new Map();
     processedFormations.forEach(f => {
         const SZ_type = f.buttons?.Button0 || 0;
         const SZ_dist = f.buttons?.Button1 || 0;
@@ -1208,26 +1240,102 @@ function renderTrains(formations) {
         const destName = getCompanyDestinations(company.code)[SZ_dist] || f.remoteDestText;
         const destStation = getDestinationStation(SZ_dist, destName, company.code);
         const destStationId = destStation ? (destStation.branchId || destStation.id) : null;
+        const finalDestName = normalizeRemoteButtonText(destName || f.remoteDestText || '不明');
+        const isArudaBoundFromShinSugaura = company.code === 'AR' &&
+            AR_NOTE_DESTINATIONS.ForArudaFromShinSugaura.has(finalDestName);
+        const isShinSugauraDirection = finalDestName === AR_NOTE_DESTINATIONS.TerminateAtShinSugaura ||
+            AR_NOTE_DESTINATIONS.beyondShinSugaura.has(finalDestName);
 
         // 前回の駅IDを編成ごとに記憶
         let prevStationId = lastStationMap.get(f.formationId) || null;
+        let positionDestStationId = destStationId;
+        if (company.code === 'AR' && prevStationId === 'AR19' && isShinSugauraDirection) {
+            positionDestStationId = 'AR61';
+        } else if (isArudaBoundFromShinSugaura && prevStationId === 'AR61') {
+            positionDestStationId = 'AR19';
+        }
 
         // 位置判定
-        const evalPos = evaluatePosition(f.posX, f.posY, f.posZ, prevStationId, destStationId);
+        const evalPos = evaluatePosition(f.posX, f.posY, f.posZ, prevStationId, positionDestStationId);
+
+        if (evalPos.type === 'transit' && Number.isFinite(Number(evalPos.progress))) {
+            const fromStation = ALL_STATIONS.find(station =>
+                (station.branchId || station.id) === evalPos.fromStationId
+            );
+            const toStation = ALL_STATIONS.find(station =>
+                (station.branchId || station.id) === evalPos.toStationId
+            );
+            const lineId = evalPos.lineId || fromStation?.lineId || toStation?.lineId || 'AR';
+            const lineStations = ALL_STATIONS
+                .filter(station => station.lineId === lineId)
+                .sort((a, b) => a.visualIndex - b.visualIndex);
+            const transitStops = lineStations.slice(1).map((station, index) =>
+                (lineStations[index].visualIndex + station.visualIndex) / 2
+            );
+            if (transitStops.length) {
+                const rawProgress = Number(evalPos.progress);
+                const routeDirection = fromStation && toStation
+                    ? Math.sign(toStation.visualIndex - fromStation.visualIndex)
+                    : 0;
+                evalPos.progress = transitStops.reduce((nearest, point) => {
+                    const distance = Math.abs(point - rawProgress);
+                    const nearestDistance = Math.abs(nearest - rawProgress);
+                    if (distance < nearestDistance) return point;
+                    if (distance === nearestDistance && routeDirection !== 0) {
+                        return routeDirection > 0 ? Math.max(nearest, point) : Math.min(nearest, point);
+                    }
+                    return nearest;
+                }, transitStops[0]);
+            }
+        }
 
         // 駅に入ったらprevStationIdを更新
-        if (evalPos.type === 'station') {
+        const shouldKeepShinSugauraBranchHistory = isArudaBoundFromShinSugaura &&
+            prevStationId === 'AR61' && evalPos.type === 'station' && evalPos.stationId === 'AR20';
+        const arrivedAtKitaYaeFromShinSugaura = isArudaBoundFromShinSugaura &&
+            prevStationId === 'AR61' && evalPos.type === 'station' && evalPos.stationId === 'AR19';
+        if (arrivedAtKitaYaeFromShinSugaura) {
+            branchArrivalHoldMap.set(f.formationId, 'AR19');
+        } else if (branchArrivalHoldMap.has(f.formationId) &&
+            !(evalPos.type === 'station' && evalPos.stationId === 'AR19')) {
+            branchArrivalHoldMap.delete(f.formationId);
+        }
+        if (evalPos.type === 'station' && !shouldKeepShinSugauraBranchHistory) {
             lastStationMap.set(f.formationId, evalPos.stationId);
         }
 
         // 駅・駅間以外は描画しない
         if (!evalPos.stationId && evalPos.type !== 'transit') return;
 
-        const finalDestName = normalizeRemoteButtonText(destName || f.remoteDestText || '不明');
-        const trackCenter = evalPos.trackCenter || 960;
-
         const lineId = evalPos.lineId || (destStation ? destStation.lineId : 'AR');
         if (lineId !== currentLineId) return;
+        const currentStationId = evalPos.type === 'station'
+            ? evalPos.stationId
+            : (evalPos.toStationId || evalPos.fromStationId);
+        let trackCenter = evalPos.trackCenter || 960;
+        const kitaYaeProgress = ALL_STATIONS.find(station => (station.branchId || station.id) === 'AR19')?.visualIndex ?? 18;
+        const sugauraProgress = ALL_STATIONS.find(station => (station.branchId || station.id) === 'AR20')?.visualIndex ?? 20;
+        const isBetweenKitaYaeAndSugaura = Number(evalPos.progress) >= kitaYaeProgress - 0.05 &&
+            Number(evalPos.progress) <= sugauraProgress + 0.05;
+        if (lineId === 'AR' && isShinSugauraDirection && isBetweenKitaYaeAndSugaura) {
+            const arTrackCenter = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.trackCenter || 960;
+            trackCenter = arTrackCenter + 150;
+        }
+        const isLeavingShinSugauraBranch = prevStationId === 'AR61' && (
+            evalPos.type === 'transit' || evalPos.stationId === 'AR20' || evalPos.stationId === 'AR19'
+        );
+        const isArrivingAtKitaYaeFromBranch = evalPos.type === 'station' &&
+            evalPos.stationId === 'AR19' && prevStationId === 'AR61';
+        if (lineId === 'AR' && isArudaBoundFromShinSugaura &&
+            (currentStationId === 'AR61' || isLeavingShinSugauraBranch || isArrivingAtKitaYaeFromBranch)) {
+            const arTrackCenter = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.trackCenter || 960;
+            trackCenter = arTrackCenter + 150;
+        }
+        if (lineId === 'AR' && branchArrivalHoldMap.get(f.formationId) === 'AR19' &&
+            evalPos.type === 'station' && evalPos.stationId === 'AR19') {
+            const arTrackCenter = ROUTE_DATA.lines.find(line => line.lineId === 'AR')?.trackCenter || 960;
+            trackCenter = arTrackCenter + 150;
+        }
 
         // 線路図の左右レーンと矢印は、列車データの座標方向ではなく行先への駅順で決める。
         // 他路線行きは現在路線の接続駅を目標にする。
@@ -1247,9 +1355,6 @@ function renderTrains(formations) {
         } else if (routeDestination && routeDestination.lineId !== lineId) {
             routeDestinationId = lineId === 'AR' ? 'AR26' : 'AH03';
         }
-        const currentStationId = evalPos.type === 'station'
-            ? evalPos.stationId
-            : (evalPos.toStationId || evalPos.fromStationId);
         let currentIndex = routeStations.findIndex(station => (station.branchId || station.id) === currentStationId);
         let destinationIndex = routeStations.findIndex(station => (station.branchId || station.id) === routeDestinationId);
         if (currentIndex < 0 && Number.isFinite(Number(evalPos.progress))) {
@@ -1291,7 +1396,17 @@ function renderTrains(formations) {
             const { formation: f, typeInfo, evalPos, dir, SZ_type, SZ_dist, finalDestName, trackCenter } = item;
             const el = document.createElement('div');
             const isOOS = isNonRevenueType(SZ_type, item.company.code);
-            const markerOffset = getTrainMarkerOffset(dir, index, group.length);
+            const currentStationId = evalPos.type === 'station'
+                ? evalPos.stationId
+                : (evalPos.toStationId || evalPos.fromStationId);
+            const sameTrackGroup = group.filter(other => Math.abs(other.trackCenter - trackCenter) < 1);
+            const trackGroupIndex = sameTrackGroup.indexOf(item);
+            const isAtKitaYae = item.lineId === 'AR' && (
+                currentStationId === 'AR19' || Math.abs(Number(evalPos.progress) - 18) < 0.5
+            );
+            const markerOffset = isAtKitaYae
+                ? getTrainMarkerOffset(dir, trackGroupIndex, sameTrackGroup.length)
+                : getTrainMarkerOffset(dir, index, group.length);
 
             const lineProgressOffset = ROUTE_DATA.lines.find(line => line.lineId === item.lineId)?.junctionOffset || 0;
             const topPos = (evalPos.progress - lineProgressOffset) * STATION_SPACING;
@@ -1305,6 +1420,11 @@ function renderTrains(formations) {
             el.setAttribute('tabindex', '0');
             el.setAttribute('aria-expanded', 'false');
             el.setAttribute('aria-haspopup', 'dialog');
+            el.dataset.formationId = String(f.formationId);
+            if (String(f.formationId) === trackedTrainFormationId) {
+                el.classList.add('tracking');
+                el.title = '追跡中（右クリックで解除）';
+            }
 
             el.innerHTML = '<div class="train-icon" aria-hidden="true"></div>';
 
@@ -1313,6 +1433,24 @@ function renderTrains(formations) {
                 activeTrainFormationId = String(f.formationId);
                 el.setAttribute('aria-expanded', 'true');
                 renderTrainDetail(item, true);
+            });
+            el.addEventListener('contextmenu', event => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const formationId = String(f.formationId);
+                trackedTrainFormationId = trackedTrainFormationId === formationId ? null : formationId;
+                closeTrainDetail();
+                container.querySelectorAll('.train-marker.tracking').forEach(marker => {
+                    marker.classList.remove('tracking');
+                    marker.removeAttribute('title');
+                });
+
+                if (trackedTrainFormationId) {
+                    el.classList.add('tracking');
+                    el.title = '追跡中（右クリックで解除）';
+                    requestAnimationFrame(() => scrollTrackedTrainIntoPosition(el));
+                }
             });
             el.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -1330,6 +1468,10 @@ function renderTrains(formations) {
             }
 
             container.appendChild(el);
+
+            if (String(f.formationId) === trackedTrainFormationId) {
+                requestAnimationFrame(() => scrollTrackedTrainIntoPosition(el));
+            }
 
             if (currentPlayerData && ((f.uuid && f.uuid === currentPlayerData.uuid) || (f.driver && f.driver === currentPlayerData.name))) {
                 updateHUD({
@@ -1523,7 +1665,32 @@ function setupEventListeners() {
     document.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
             closeTrainDetail();
+            return;
         }
+
+        if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' || !routeMap) return;
+        const target = event.target;
+        if (target instanceof HTMLElement && (
+            target.isContentEditable ||
+            ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON'].includes(target.tagName)
+        )) return;
+        if (document.getElementById('train-detail-modal')?.classList.contains('open')) return;
+
+        const scrollPoints = getRouteStationScrollPoints();
+        if (!scrollPoints.length) return;
+
+        event.preventDefault();
+        const nearestIndex = scrollPoints.reduce((bestIndex, point, index) =>
+            Math.abs(point - routeMap.scrollTop) < Math.abs(scrollPoints[bestIndex] - routeMap.scrollTop)
+                ? index
+                : bestIndex, 0);
+        const direction = event.key === 'ArrowDown' ? 1 : -1;
+        const targetIndex = Math.max(0, Math.min(scrollPoints.length - 1, nearestIndex + direction));
+        const maxScrollTop = Math.max(0, routeMap.scrollHeight - routeMap.clientHeight);
+        routeMap.scrollTo({
+            top: Math.max(0, Math.min(maxScrollTop, scrollPoints[targetIndex])),
+            behavior: 'smooth'
+        });
     });
     window.addEventListener('beforeunload', saveRouteMapScroll);
     window.addEventListener('pagehide', saveRouteMapScroll);

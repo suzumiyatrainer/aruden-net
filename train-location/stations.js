@@ -137,8 +137,25 @@ export const ALL_STATIONS = buildAllStations();
  * @returns {object} 駅 or 駅間 or unknown
  */
 export function evaluatePosition(x, y, z, prevStationId = null, destStationId = null) {
-    const XZ_RADIUS = 200;
+    const XZ_RADIUS = 175;
     const Y_RADIUS = 5;
+    const TRACK_CORRIDOR_RADIUS = 175;
+    const TRACK_Y_TOLERANCE = 50;
+
+    const projectToSegment = (from, to) => {
+        const dx = to.x - from.x;
+        const dz = to.z - from.z;
+        const lengthSquared = dx * dx + dz * dz;
+        if (!lengthSquared) return null;
+        const progress = ((x - from.x) * dx + (z - from.z) * dz) / lengthSquared;
+        if (progress < 0 || progress > 1) return null;
+        const projectedX = from.x + dx * progress;
+        const projectedZ = from.z + dz * progress;
+        const distanceXZ = Math.hypot(x - projectedX, z - projectedZ);
+        const projectedY = from.y + (to.y - from.y) * progress;
+        if (distanceXZ > TRACK_CORRIDOR_RADIUS || Math.abs(y - projectedY) > TRACK_Y_TOLERANCE) return null;
+        return { progress, distanceXZ };
+    };
 
     // 1. 全駅から最寄りを検索
     let bestMatch = null;
@@ -190,6 +207,11 @@ export function evaluatePosition(x, y, z, prevStationId = null, destStationId = 
                 progress = (dx * dxTrain + dz * dzTrain) / (totalDist * totalDist);
                 progress = Math.max(0, Math.min(1, progress));
             }
+            const projectedX = prevSt.x + dx * progress;
+            const projectedZ = prevSt.z + dz * progress;
+            const projectedY = prevSt.y + (destSt.y - prevSt.y) * progress;
+            if (Math.hypot(x - projectedX, z - projectedZ) <= TRACK_CORRIDOR_RADIUS &&
+                Math.abs(y - projectedY) <= TRACK_Y_TOLERANCE) {
             // 画面上の位置
             const visualProgress = prevSt.visualIndex + (destSt.visualIndex - prevSt.visualIndex) * progress;
             return {
@@ -201,33 +223,36 @@ export function evaluatePosition(x, y, z, prevStationId = null, destStationId = 
                 direction: direction > 0 ? 'down' : 'up',
                 segment: `${prevSt.name} 〜 ${destSt.name}`
             };
+            }
         }
     }
 
     // 3. それ以外は従来通り最寄り2駅で駅間判定
-    let closestOnAnyLine = null;
-    let minDistAny = Infinity;
+    let closestSegment = null;
     for (const line of ROUTE_DATA.lines) {
-        const distances = line.stations.map((st, idx) => {
-            const dx = x - st.x;
-            const dz = z - st.z;
-            return { dist: Math.sqrt(dx * dx + dz * dz), idx, st, lineId: line.lineId, offset: line.junctionOffset || 0, trackCenter: line.trackCenter };
-        });
-        distances.sort((a, b) => a.dist - b.dist);
-        if (distances.length >= 2 && distances[0].dist < minDistAny) {
-            minDistAny = distances[0].dist;
-            const closest = distances[0];
-            const second = distances[1];
-            const minIdx = Math.min(closest.idx, second.idx);
-            closestOnAnyLine = {
+        const stations = ALL_STATIONS
+            .filter(station => station.lineId === line.lineId)
+            .sort((a, b) => a.visualIndex - b.visualIndex);
+        for (let i = 0; i < stations.length - 1; i++) {
+            const from = stations[i];
+            const to = stations[i + 1];
+            const projection = projectToSegment(from, to);
+            if (!projection || (closestSegment && projection.distanceXZ >= closestSegment.distanceXZ)) continue;
+            closestSegment = {
                 type: 'transit',
                 lineId: line.lineId,
-                segment: `${line.stations[minIdx].name} 〜 ${line.stations[Math.min(minIdx + 1, line.stations.length - 1)].name}`,
-                progress: closest.offset + minIdx + 0.5,
-                trackCenter: line.trackCenter
+                fromStationId: from.branchId || from.id,
+                toStationId: to.branchId || to.id,
+                segment: `${from.name} 〜 ${to.name}`,
+                progress: from.visualIndex + (to.visualIndex - from.visualIndex) * projection.progress,
+                trackCenter: from.trackCenter,
+                distanceXZ: projection.distanceXZ
             };
         }
     }
-    if (closestOnAnyLine) return closestOnAnyLine;
+    if (closestSegment) {
+        delete closestSegment.distanceXZ;
+        return closestSegment;
+    }
     return { type: 'unknown', progress: -1 };
 }

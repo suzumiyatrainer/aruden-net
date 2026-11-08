@@ -25,7 +25,9 @@
             font-family: 'Inter', 'Noto Sans JP', sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-primary);
-            height: 100vh;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -34,7 +36,8 @@
         .container {
             text-align: center;
             background: rgba(255, 255, 255, 0.95);
-            padding: 48px 64px;
+            width: min(100%, 480px);
+            padding: 48px 32px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
             border: 1px solid rgba(0, 0, 0, 0.08);
@@ -45,6 +48,7 @@
             margin-bottom: 28px;
             color: var(--text-primary);
             letter-spacing: 0.04em;
+            white-space: nowrap;
         }
 
         .link-button {
@@ -52,7 +56,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            padding: 16px 36px;
+            padding: 16px 32px;
             font-size: 1.125rem;
             font-weight: 600;
             color: #ffffff;
@@ -60,9 +64,27 @@
             border: none;
             border-radius: 10px;
             text-decoration: none;
+            white-space: nowrap;
             cursor: pointer;
             transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
             box-shadow: 0 4px 12px rgba(40, 186, 165, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 36px 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 24px;
+            }
+
+            .link-button {
+                width: 100%;
+                padding: 14px 20px;
+                font-size: 1rem;
+            }
         }
 
         .link-button:hover {
