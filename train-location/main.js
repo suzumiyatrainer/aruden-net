@@ -774,8 +774,8 @@ function renderStations() {
     const isMobile = isMobileViewport();
     const branchOffset = getBranchOffset();
     const viewWidth = routeMap ? routeMap.clientWidth : window.innerWidth;
-    // スマホではCSSの zoom: 0.72 を考慮した論理幅の中で中央やや右寄りに配置し、PCでは従来通り画面幅の1/4+55に配置
-    const mobileLogicalWidth = Math.round(viewWidth / 0.72);
+    // スマホでは従来の拡大率(0.9)の75% (= 0.675) を考慮した論理幅の中で中央やや右寄りに配置し、PCでは従来通り画面幅の1/4+55に配置
+    const mobileLogicalWidth = Math.round(viewWidth / 0.675);
     const mainTrackCenter = isMobile
         ? Math.max(255, Math.min(310, Math.round(mobileLogicalWidth * 0.52)))
         : Math.max(350, Math.round(viewWidth * 0.25)) + 55;
