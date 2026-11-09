@@ -980,15 +980,21 @@ function setupWebSocket() {
         console.warn(`⚠️ WebSocket Connection Error:`, e);
     };
 
-    ws.onmessage = (e) => {
+    ws.onmessage = async (e) => {
         try {
-            const data = JSON.parse(e.data);
+            let text = e.data;
+            if (text instanceof Blob) {
+                text = await text.text();
+            } else if (text instanceof ArrayBuffer) {
+                text = new TextDecoder().decode(text);
+            }
+            const data = JSON.parse(text);
             if (data.type === 'pong') return;
-            console.log(`📩 WebSocket Received:`, e.data);
+            console.log(`📩 WebSocket Received:`, text);
             if (data.type === 'auth_response') handleAuthResponse(data);
             else if (data.type === 'driver_assist' || data.type === 'driver_assist_v2') handleDriverAssist(data);
         } catch (err) {
-            console.error('JSON parse error:', err);
+            console.error('JSON parse error:', err, e.data);
         }
     };
 }
