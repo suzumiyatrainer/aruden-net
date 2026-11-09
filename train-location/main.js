@@ -1671,7 +1671,8 @@ function handleForgotTokenLogin() {
     }
     if (ws && ws.readyState === WebSocket.OPEN) {
         showAuthSuccess('認証トークンを確認中...');
-        ws.send(JSON.stringify({ action: 'auth_token', token }));
+        // パスワード再設定フロー: isReset=true でサーバー側にパスワード再設定を強制
+        ws.send(JSON.stringify({ action: 'auth_token', token, isReset: true }));
     } else {
         showAuthError('サーバーに接続されていません。');
     }
