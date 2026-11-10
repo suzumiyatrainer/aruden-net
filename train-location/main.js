@@ -17,24 +17,24 @@ const AR_TYPES = {
 };
 
 const AR_DISTS = {
-    1: "有田",
-    2: "有電高柳",
-    3: "蹄光寺坂",
-    4: "本涼瀬",
-    5: "十全",
-    6: "須賀浦",
-    7: "想掛",
-    8: "桜地",
-    9: "東島",
-    10: "北河原",
-    11: "高見浜",
-    12: "新須賀浦",
-    13: "松森川",
-    14: "金城",
-    15: "糸里",
-    16: "島見が丘",
-    17: "鴫野華瀬",
-    18: "城川芝浦"
+    1: { name: "有田", en: "Aruda" },
+    2: { name: "有電高柳", en: "Aruden-Takayanagi" },
+    3: { name: "蹄光寺坂", en: "Teikojizaka" },
+    4: { name: "本涼瀬", en: "Hom-Suzuse" },
+    5: { name: "十全", en: "Juzen" },
+    6: { name: "須賀浦", en: "Sugaura" },
+    7: { name: "想掛", en: "Omoikake" },
+    8: { name: "桜地", en: "Sakuraji" },
+    9: { name: "東島", en: "Higashijima" },
+    10: { name: "北河原", en: "Kitagawara" },
+    11: { name: "高見浜", en: "Takamihama" },
+    12: { name: "新須賀浦", en: "Shin-Sugaura" },
+    13: { name: "松森川", en: "Matsumorigawa" },
+    14: { name: "金城", en: "Kinjo" },
+    15: { name: "糸里", en: "Itosato" },
+    16: { name: "島見が丘", en: "Shimamigaoka" },
+    17: { name: "鴫野華瀬", en: "Shigino-Kase" },
+    18: { name: "城川芝浦", en: "Shirokawa-Shibaura" }
 };
 
 const KHR_TYPES = {
@@ -47,24 +47,24 @@ const KHR_TYPES = {
     22: { id: 'sp', name: '特快', class: 'type-spec-rapid' }
 };
 const KHR_DISTS = {
-    14: "金城",
-    15: "松森川",
-    16: "北海王",
-    17: "新須賀浦",
-    19: "城川芝浦",
-    20: "春海",
-    21: "島見が丘",
-    22: "金城",
-    24: "東島",
-    25: "芝向",
-    26: "桜地",
-    27: "高見浜",
-    28: "須賀浦",
-    29: "八重川",
-    30: "十全",
-    31: "本涼瀬",
-    32: "有電高柳",
-    33: "有田",
+    14: { name: "金城", en: "Kinjo" },
+    15: { name: "松森川", en: "Matsumorigawa" },
+    16: { name: "北海王", en: "Kita-Kaio" },
+    17: { name: "新須賀浦", en: "Shin-Sugaura" },
+    19: { name: "城川芝浦", en: "Shirokawa-Shibaura" },
+    20: { name: "春海", en: "Harumi" },
+    21: { name: "島見が丘", en: "Shimamigaoka" },
+    22: { name: "金城", en: "Kinjo" },
+    24: { name: "東島", en: "Higashijima" },
+    25: { name: "芝向", en: "Shibanomuko" },
+    26: { name: "桜地", en: "Sakuraji" },
+    27: { name: "高見浜", en: "Takamihama" },
+    28: { name: "須賀浦", en: "Sugaura" },
+    29: { name: "八重川", en: "Yaegawa" },
+    30: { name: "十全", en: "Juzen" },
+    31: { name: "本涼瀬", en: "Hom-Suzuse" },
+    32: { name: "有電高柳", en: "Aruden-Takayanagi" },
+    33: { name: "有田", en: "Aruda" }
 };
 
 const SR_TYPES = {
@@ -77,23 +77,23 @@ const SR_TYPES = {
     16: { id: 'sp', name: '特快', class: 'type-spec-rapid' }
 };
 const SR_DISTS = {
-    1: "城川芝浦",
-    2: "葛海中央",
-    3: "糸里",
-    4: "金城",
-    9: "金城",
-    10: "松森川",
-    11: "新須賀浦",
-    12: "有田",
-    13: "有電高柳",
-    14: "蹄光寺坂",
-    15: "本涼瀬",
-    16: "十全",
-    17: "須賀浦",
-    18: "桜地",
-    19: "東島",
-    20: "北河原",
-    21: "高見浜",
+    1: { name: "城川芝浦", en: "Shirokawa-Shibaura" },
+    2: { name: "葛海中央", en: "Katsumi-Chuo" },
+    3: { name: "糸里", en: "Itosato" },
+    4: { name: "金城", en: "Kinjo" },
+    9: { name: "金城", en: "Kinjo" },
+    10: { name: "松森川", en: "Matsumorigawa" },
+    11: { name: "新須賀浦", en: "Shin-Sugaura" },
+    12: { name: "有田", en: "Aruda" },
+    13: { name: "有電高柳", en: "Aruden-Takayanagi" },
+    14: { name: "蹄光寺坂", en: "Teikojizaka" },
+    15: { name: "本涼瀬", en: "Hom-Suzuse" },
+    16: { name: "十全", en: "Juzen" },
+    17: { name: "須賀浦", en: "Sugaura" },
+    18: { name: "桜地", en: "Sakuraji" },
+    19: { name: "東島", en: "Higashijima" },
+    20: { name: "北河原", en: "Kitagawara" },
+    21: { name: "高見浜", en: "Takamihama" }
 };
 
 const STOP_TYPES = [
@@ -187,7 +187,10 @@ const REMOTE_TYPE_LABEL_TO_VALUE = new Map(
     [['回送', 6], ['臨時', 3], ['各駅停車', 7], ['区間快速', 8], ['通勤快速', 9], ['快速', 10], ['新快速', 11], ['特別快速', 12]]
 );
 const REMOTE_DEST_LABEL_TO_VALUE = new Map(
-    Object.entries(AR_DISTS).map(([value, label]) => [label, Number(value)])
+    Object.entries(AR_DISTS).map(([value, item]) => [
+        typeof item === 'object' ? item.name : item,
+        Number(value)
+    ])
 );
 
 function getCompanyTypes(companyCode) {
@@ -202,6 +205,12 @@ function getCompanyDestinations(companyCode) {
     return AR_DISTS;
 }
 
+function getCompanyDestinationName(companyCode, destinationId) {
+    const dest = getCompanyDestinations(companyCode)?.[destinationId];
+    if (!dest) return '';
+    return typeof dest === 'object' ? (dest.name || '') : dest;
+}
+
 function getRemoteCompanyButtonConfig(companyCode, kind) {
     if (companyCode === 'AR') {
         return kind === 'type'
@@ -213,7 +222,7 @@ function getRemoteCompanyButtonConfig(companyCode, kind) {
     const entries = Object.entries(map).filter(([key]) => Number.isInteger(Number(key)));
     const labels = kind === 'type'
         ? new Map(entries.filter(([, value]) => value?.name).map(([key, value]) => [value.name, Number(key)]))
-        : new Map(entries.map(([key, value]) => [value, Number(key)]));
+        : new Map(entries.map(([key, value]) => [typeof value === 'object' ? value.name : value, Number(key)]));
     return { values: new Set(entries.map(([key]) => Number(key))), labels };
 }
 
@@ -269,6 +278,14 @@ const trainElements = new Map();
 
 // --- Initialization ---
 function init() {
+    if (IS_API_MODE) {
+        // APIモード: UIを作らずJSONのみを表示し、5秒ごとに更新する
+        document.title = 'Aruden Train Location API';
+        document.body.innerHTML = '<pre id="api-output" style="margin:0;white-space:pre-wrap;word-break:break-all;font-family:monospace;">{}</pre>';
+        fetchRemoteTrains();
+        setInterval(fetchRemoteTrains, 5000);
+        return;
+    }
     renderStations();
     restoreRouteMapScroll();
     setupWebSocket();
@@ -339,7 +356,7 @@ function getCompanyTypeValueFromLabel(companyCode, customButtons) {
 }
 
 function getRemoteDestinationText(customButtons, destinationValue, companyCode = 'AR', fallbackIndex = 1) {
-    const mappedDestination = getCompanyDestinations(companyCode)[destinationValue];
+    const mappedDestination = getCompanyDestinationName(companyCode, destinationValue);
     if (mappedDestination) return mappedDestination;
 
     return normalizeRemoteButtonText(customButtons?.[fallbackIndex]?.text);
@@ -372,7 +389,7 @@ function getHudDestination(type, destination, companyCode = 'AR') {
         return '---';
     }
 
-    return getCompanyDestinations(companyCode)[destination] || '---';
+    return getCompanyDestinationName(companyCode, destination) || '---';
 }
 
 function getDestinationStation(destinationId, destinationName, companyCode = 'AR') {
@@ -433,7 +450,7 @@ function getRemoteTrainNumber(formation, customButtons) {
 function getTrainStopRows(item) {
     const stationId = station => station.branchId || station.id;
     const destinationId = Number(item.SZ_dist);
-    const destinationName = getCompanyDestinations(item.company.code)[destinationId] || item.finalDestName || '';
+    const destinationName = getCompanyDestinationName(item.company.code, destinationId) || item.finalDestName || '';
     const isShinSugauraDestination = item.lineId === 'AR' && (
         destinationName === AR_NOTE_DESTINATIONS.shinSugauraTerminus ||
         AR_NOTE_DESTINATIONS.beyondShinSugaura.has(destinationName)
@@ -549,7 +566,7 @@ function getTrainDirectionNote(item) {
     const sugaura = visualIndexFor('AR20');
     const shinSugaura = visualIndexFor('AR61');
     const progress = Number(item.evalPos.progress);
-    const destinationName = getCompanyDestinations(item.company.code)[Number(item.SZ_dist)] || item.finalDestName || '';
+    const destinationName = getCompanyDestinationName(item.company.code, Number(item.SZ_dist)) || item.finalDestName || '';
     if (!Number.isFinite(progress)) return '';
 
     const isBetween = (start, end) => start !== undefined && end !== undefined &&
@@ -585,7 +602,7 @@ function renderTrainDetail(item, focusClose = false) {
     const directionNote = isDeadhead
         ? '回送電車です、ご利用頂けません。'
         : (hideDestination ? '' : getTrainDirectionNote(item));
-    const arDestinationName = getCompanyDestinations(item.company.code)[Number(item.SZ_dist)] || item.finalDestName || '';
+    const arDestinationName = getCompanyDestinationName(item.company.code, Number(item.SZ_dist)) || item.finalDestName || '';
     const HigashijimaLineDirectDirectNote = !isDeadhead && !hideDestination && item.lineId === 'AR' && AR_NOTE_DESTINATIONS.HigashijimaLineDirect.has(arDestinationName);
     const hasShinSugauraThroughService = !isDeadhead && !hideDestination && item.lineId === 'AR' && AR_NOTE_DESTINATIONS.beyondShinSugaura.has(arDestinationName);
     const hasKnownType = item.company.code === 'AR'
@@ -1225,11 +1242,63 @@ function getRollingStock(trainName, company, modelName = '') {
 }
 
 /**
+ * API配信 (train-loc.html?api)
+ */
+const IS_API_MODE = new URLSearchParams(window.location.search).has('api');
+const API_OWNER_CODES = { AR: 'AR', KK: 'KHR', SK: 'SR' };
+
+function buildApiTrainEntry(item) {
+    const { formation: f, evalPos, company } = item;
+    const isDeadhead = isNonRevenueType(item.SZ_type, company.code) || item.typeInfo.class === 'type-oos';
+    const hideDestination = Number(item.rawButton1) === 0;
+    const destEntry = getCompanyDestinations(company.code)?.[item.SZ_dist];
+    const thisDist = (isDeadhead || hideDestination || !destEntry || typeof destEntry !== 'object')
+        ? null
+        : (destEntry.en || null);
+
+    const nowLocation = evalPos.type === 'station'
+        ? evalPos.stationId
+        : [evalPos.fromStationId, evalPos.toStationId].filter(Boolean).join(',');
+
+    const stopPattern = isDeadhead ? [] : getTrainStopRows(item).map(({ station, stops }) => ({
+        station: station.branchId || station.id,
+        stop: stops
+    }));
+
+    const seriesMatch = String(item.rollingStock || '').match(/\d+/);
+    const carCount = Number(f.carCount);
+
+    return {
+        trainNumber: f.trainNumber || null,
+        thisType: String(item.typeInfo.class || '').replace(/^type-/, '') || null,
+        thisDist,
+        nowLocation,
+        stopPattern,
+        consistOf: Number.isFinite(carCount) && f.carCount !== null ? carCount : null,
+        ownerCompany: API_OWNER_CODES[company.code] || null,
+        trainSeries: seriesMatch ? seriesMatch[0] : null,
+        formationNumber: company.code === 'AR' && f.formationNumber ? f.formationNumber : null
+    };
+}
+
+function publishApiData(trains) {
+    const payload = {
+        updatedAt: new Date().toISOString(),
+        trains: trains.filter(t => t.ownerCompany)
+    };
+    window.arudenApiData = payload;
+    if (!IS_API_MODE) return;
+    const output = document.getElementById('api-output');
+    if (output) output.textContent = JSON.stringify(payload, null, 2);
+}
+
+/**
  * Render all train markers on the route map (multi-line)
  */
 function renderTrains(formations) {
     const container = document.getElementById('trains-container');
     const groups = {};
+    const apiTrains = [];
 
     // 同じformationIdのformationを1つにまとめる（trainStateData[10] === 0 のものを優先）
     const uniqueFormations = new Map();
@@ -1267,7 +1336,7 @@ function renderTrains(formations) {
         }
 
         // 行先駅IDを取得
-        const destName = getCompanyDestinations(company.code)[SZ_dist] || f.remoteDestText;
+        const destName = getCompanyDestinationName(company.code, SZ_dist) || f.remoteDestText;
         const destStation = getDestinationStation(SZ_dist, destName, company.code);
         const destStationId = destStation ? (destStation.branchId || destStation.id) : null;
         const finalDestName = normalizeRemoteButtonText(destName || f.remoteDestText || '不明');
@@ -1338,6 +1407,22 @@ function renderTrains(formations) {
         if (!evalPos.stationId && evalPos.type !== 'transit') return;
 
         const lineId = evalPos.lineId || (destStation ? destStation.lineId : 'AR');
+
+        // API用データ（表示路線タブに関係なく全路線の列車を対象にする）
+        apiTrains.push(buildApiTrainEntry({
+            formation: f,
+            typeInfo: getTypeInfo(SZ_type, company.code),
+            evalPos,
+            SZ_type,
+            SZ_dist,
+            finalDestName,
+            destStationId,
+            lineId,
+            company,
+            rawButton1: f.rawButton1,
+            rollingStock
+        }));
+
         if (lineId !== currentLineId) return;
         const currentStationId = evalPos.type === 'station'
             ? evalPos.stationId
@@ -1416,6 +1501,9 @@ function renderTrains(formations) {
             rollingStock
         });
     });
+
+    publishApiData(apiTrains);
+    if (IS_API_MODE) return;
 
     container.innerHTML = '';
     let restoredTrainDetail = false;
