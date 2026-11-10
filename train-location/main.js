@@ -4,7 +4,7 @@ import { ROUTE_DATA, ALL_STATIONS, evaluatePosition } from './stations.js';
 // Constants and Mappings
 const WS_URL = 'wss://suzumiya-nas.tail61b99.ts.net/ws';
 const WS_HEARTBEAT_INTERVAL_MS = 10000;
-const REMOTE_URL = 'https://suzumiya-nas.tail61b99.ts.net/';
+const REMOTE_URL = globalThis.ARUDEN_REMOTE_URL || 'https://suzumiya-nas.tail61b99.ts.net/';
 
 const AR_TYPES = {
     default: { id: 'oo', name: '回送', class: 'type-oos' },
